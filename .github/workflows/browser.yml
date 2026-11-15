@@ -1,0 +1,47 @@
+# .github/workflows/browser.yml
+name: Browser suite
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Browser suite (Windows)
+    runs-on: windows-2025
+    timeout-minutes: 20
+    env:
+      MARIFAI_BROWSER_ARTIFACTS: browser-artifacts
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --no-shell chromium
+      - name: Run the full browser suite
+        run: npm run test:browser
+      - name: Summarize browser checks
+        run: |
+          # .github/workflows/browser.yml
+          $evidence = Get-Content -LiteralPath browser-artifacts/evidence.json -Raw | ConvertFrom-Json
+          $summary = "$($evidence.checks.Count) browser checks passed in Chromium $($evidence.browser)."
+          $summary
+          $summary >> $env:GITHUB_STEP_SUMMARY
+      - name: Upload browser reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-browser-reports
+          path: browser-artifacts/
+          if-no-files-found: warn
+          retention-days: 7
