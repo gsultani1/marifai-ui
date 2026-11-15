@@ -1,4 +1,4 @@
-// packages/ai-ui/scripts/browser.mjs
+// scripts/browser.mjs
 import assert from "node:assert/strict";
 import { Buffer } from "node:buffer";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -36,7 +36,7 @@ async function expectNoViolations(page, label) {
 const distanceFromBottom = (locator) => locator.evaluate((el) => el.scrollHeight - el.scrollTop - el.clientHeight);
 
 async function checkChat(page, url, requests) {
-  await page.goto(url);
+  await page.goto(`${url}#chat`);
   const log = page.getByRole("log", { name: "Conversation" });
   await log.waitFor();
   await page.waitForFunction(() => {
@@ -45,7 +45,8 @@ async function checkChat(page, url, requests) {
   });
   pass("conversation opens at the latest message");
 
-  await page.locator('[data-slot="code-block"]').first().getByRole("button", { name: "Copy" }).click();
+  const codeBlock = log.locator('[data-slot="code-block"]').filter({ hasText: "export async function getJson" });
+  await codeBlock.getByRole("button", { name: "Copy", exact: true }).click();
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   assert.match(copied, /export async function getJson/);
   pass("code block copies to the real clipboard");
@@ -212,7 +213,7 @@ const WORD = [
 ].join("");
 
 async function checkBuilder(page) {
-  const builder = page.locator('[data-slot="page-builder"]');
+  const builder = page.getByRole("region", { name: "Spring sale email", exact: true });
   await builder.scrollIntoViewIfNeeded();
   const canvas = builder.getByRole("region", { name: "Spring sale email canvas" });
   const intro = canvas.getByRole("group", { name: /^Text: Hi neighbor/ });
@@ -1216,8 +1217,6 @@ async function checkGallery(page, url) {
   await web.getByRole("button", { name: "Full screen" }).waitFor();
   pass("web preview switches devices and orientation, resizes from the keyboard, inspects elements and toggles fullscreen");
 
-  await checkRegionCapture(page, previews, web);
-
   const orderFrame = page.frameLocator('iframe[title="Order total"]');
   await orderFrame.getByText("$153").waitFor({ timeout: 10_000 });
   await previews.getByRole("button", { name: "Break it again" }).click();
@@ -1491,20 +1490,19 @@ const url = `http://127.0.0.1:${address.port}/`;
 // Region capture needs tab capture, which the full Chromium build supports headlessly and the headless shell does not;
 // the switch accepts the share prompt for the current tab.
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
-const browser = await chromium.launch({ ...(executablePath ? { executablePath } : { channel: "chromium" }), args: ["--auto-accept-this-tab-capture"] });
+const captureArgs = ["--auto-accept-this-tab-capture"];
+// Use software compositing on Windows to ensure headless tab capture receives video frames.
+if (process.platform === "win32") captureArgs.push("--disable-gpu");
+const browser = await chromium.launch({ ...(executablePath ? { executablePath } : { channel: "chromium" }), args: captureArgs });
 try {
-  const context = await browser.newContext({
-    viewport: { width: 1280, height: 900 },
-    reducedMotion: "reduce",
-    permissions: ["clipboard-read", "clipboard-write"],
-  });
-  const page = await context.newPage();
+  const viewport = { width: 1280, height: 900 };
   const errors = [];
-  const requests = [];
-  page.on("pageerror", (error) => errors.push(error.message));
-  page.on("request", (request) => requests.push(request.url()));
-  if (process.argv.includes("--region-capture")) {
-    await page.goto(`${url}#gallery`);
+  // Capture the tab from a fresh context before the gallery changes preview and focus state.
+  const captureContext = await browser.newContext({ viewport, reducedMotion: "reduce" });
+  try {
+    const page = await captureContext.newPage();
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto(url + "#gallery");
     await page.getByRole("heading", { name: "Feedback and status" }).waitFor();
     const previews = page.locator("#gallery-preview");
     const web = previews.locator('[data-slot="web-preview"]').first();
@@ -1513,7 +1511,19 @@ try {
     await web.getByRole("button", { name: "Exit full screen" }).click();
     await checkRegionCapture(page, previews, web);
     await previews.locator('[data-slot="region-capture"]').locator("..").screenshot({ path: resolve(output, "region-capture.png") });
-  } else {
+  } finally {
+    await captureContext.close();
+  }
+  if (!process.argv.includes("--region-capture")) {
+    const context = await browser.newContext({
+      viewport,
+      reducedMotion: "reduce",
+      permissions: ["clipboard-read", "clipboard-write"],
+    });
+    const page = await context.newPage();
+    const requests = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    page.on("request", (request) => requests.push(request.url()));
     await checkChat(page, url, requests);
     await checkWorkbench(page, url);
     await checkGallery(page, url);
