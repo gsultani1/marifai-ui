@@ -1,0 +1,196 @@
+/* packages/ai-ui/src/styles/preset.css */
+/*
+ * @sultanico/ai-ui preset for Tailwind CSS v4.
+ *
+ *   @import "tailwindcss";
+ *   @import "@sultanico/ai-ui/preset.css";
+ *
+ * Default token values sit in @layer base, so any unlayered :root or .dark
+ * declarations in the app (including an existing shadcn/ui theme) win.
+ * Dark mode follows a .dark class or [data-theme="dark"] on an ancestor;
+ * .light or [data-theme="light"] restores the light tokens inside it, as
+ * HtmlEditor does for its page.
+ */
+
+@import "@xterm/xterm/css/xterm.css" layer(components);
+
+@source "..";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-code-background: var(--code-background);
+  --color-code-foreground: var(--code-foreground);
+  --color-code-comment: var(--code-comment);
+  --color-code-keyword: var(--code-keyword);
+  --color-code-string: var(--code-string);
+  --color-code-number: var(--code-number);
+  --color-code-function: var(--code-function);
+  --color-code-type: var(--code-type);
+  --color-code-property: var(--code-property);
+  --color-code-variable: var(--code-variable);
+  --color-code-tag: var(--code-tag);
+  --color-code-meta: var(--code-meta);
+  --color-code-punctuation: var(--code-punctuation);
+  --color-code-inserted: var(--code-inserted);
+  --color-code-deleted: var(--code-deleted);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-chart-7: var(--chart-7);
+  --color-chart-8: var(--chart-8);
+
+  --animate-shimmer: ai-shimmer 2s linear infinite;
+
+  @keyframes ai-shimmer {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: -100% 0;
+    }
+  }
+}
+
+@layer base {
+  :root,
+  .light,
+  [data-theme="light"] {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.96 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.96 0 0);
+    --muted-foreground: oklch(0.5 0 0);
+    --accent: oklch(0.95 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --success: oklch(0.55 0.15 150);
+    --warning: oklch(0.62 0.15 65);
+    --border: oklch(0.91 0 0);
+    --input: oklch(0.88 0 0);
+    --ring: oklch(0.6 0 0);
+
+    --code-background: oklch(0.985 0 0);
+    --code-foreground: oklch(0.25 0 0);
+    --code-comment: oklch(0.52 0.02 260);
+    --code-keyword: oklch(0.52 0.2 20);
+    --code-string: oklch(0.42 0.13 255);
+    --code-number: oklch(0.48 0.16 255);
+    --code-function: oklch(0.5 0.2 300);
+    --code-type: oklch(0.52 0.14 50);
+    --code-property: oklch(0.48 0.16 255);
+    --code-variable: oklch(0.52 0.14 50);
+    --code-tag: oklch(0.47 0.13 150);
+    --code-meta: oklch(0.48 0.16 255);
+    --code-punctuation: oklch(0.4 0 0);
+    --code-inserted: oklch(0.47 0.13 150);
+    --code-deleted: oklch(0.52 0.2 20);
+
+    --ansi-black: oklch(0.3 0 0);
+    --ansi-red: oklch(0.5 0.19 27);
+    --ansi-green: oklch(0.47 0.13 150);
+    --ansi-yellow: oklch(0.5 0.11 80);
+    --ansi-blue: oklch(0.48 0.17 260);
+    --ansi-magenta: oklch(0.5 0.19 330);
+    --ansi-cyan: oklch(0.48 0.09 210);
+    --ansi-white: oklch(0.5 0 0);
+
+    /* Categorical chart slots, validated for CVD separation in this order. */
+    --chart-1: #2a78d6;
+    --chart-2: #eb6834;
+    --chart-3: #1baf7a;
+    --chart-4: #eda100;
+    --chart-5: #e87ba4;
+    --chart-6: #008300;
+    --chart-7: #6250d6;
+    --chart-8: #e34948;
+  }
+
+  .dark,
+  [data-theme="dark"] {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.18 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.3 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --success: oklch(0.75 0.16 150);
+    --warning: oklch(0.82 0.14 80);
+    --border: oklch(1 0 0 / 12%);
+    --input: oklch(1 0 0 / 18%);
+    --ring: oklch(0.556 0 0);
+
+    --code-background: oklch(0.18 0 0);
+    --code-foreground: oklch(0.9 0 0);
+    --code-comment: oklch(0.65 0.02 260);
+    --code-keyword: oklch(0.73 0.16 20);
+    --code-string: oklch(0.82 0.08 240);
+    --code-number: oklch(0.77 0.12 245);
+    --code-function: oklch(0.79 0.13 300);
+    --code-type: oklch(0.81 0.13 60);
+    --code-property: oklch(0.77 0.12 245);
+    --code-variable: oklch(0.81 0.13 60);
+    --code-tag: oklch(0.82 0.16 145);
+    --code-meta: oklch(0.77 0.12 245);
+    --code-punctuation: oklch(0.8 0 0);
+    --code-inserted: oklch(0.82 0.16 145);
+    --code-deleted: oklch(0.73 0.16 20);
+
+    --ansi-black: oklch(0.62 0 0);
+    --ansi-red: oklch(0.72 0.17 25);
+    --ansi-green: oklch(0.78 0.16 150);
+    --ansi-yellow: oklch(0.85 0.14 90);
+    --ansi-blue: oklch(0.74 0.13 255);
+    --ansi-magenta: oklch(0.76 0.15 330);
+    --ansi-cyan: oklch(0.8 0.1 210);
+    --ansi-white: oklch(0.92 0 0);
+
+    --chart-1: #3987e5;
+    --chart-2: #d95926;
+    --chart-3: #199e70;
+    --chart-4: #c98500;
+    --chart-5: #d55181;
+    --chart-6: #008300;
+    --chart-7: #9085e9;
+    --chart-8: #e66767;
+  }
+}

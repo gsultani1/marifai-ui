@@ -1,0 +1,78 @@
+// packages/ai-ui/src/components/task-quick-add.tsx
+"use client";
+
+import { PlusIcon } from "lucide-react";
+import { useId, useRef, useState } from "react";
+
+import { focusRing } from "../lib/classes.js";
+import { cn } from "../lib/cn.js";
+import { Button } from "./button.js";
+
+export interface QuickAddTask {
+  title: string;
+  /** An optional calendar date in YYYY-MM-DD format. */
+  dueDate?: string;
+}
+
+export interface TaskQuickAddProps {
+  /** Reject to keep the draft open for retry. */
+  onAdd: (task: QuickAddTask) => void | Promise<void>;
+  className?: string;
+}
+
+const fieldClass = cn("block h-8 w-full rounded-md border border-input bg-background px-2 text-sm", focusRing);
+
+export function TaskQuickAdd({ onAdd, className }: TaskQuickAddProps) {
+  const id = useId();
+  const inFlight = useRef(false);
+  const [title, setTitle] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useState<"added" | "error" | null>(null);
+
+  async function add() {
+    const trimmed = title.trim();
+    if (!trimmed || inFlight.current) return;
+    inFlight.current = true;
+    setBusy(true);
+    setFeedback(null);
+    try {
+      await onAdd(dueDate ? { title: trimmed, dueDate } : { title: trimmed });
+      setTitle("");
+      setDueDate("");
+      setFeedback("added");
+    } catch {
+      setFeedback("error");
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form
+      aria-label="Add a task"
+      data-slot="task-quick-add"
+      className={cn("space-y-2 rounded-lg border border-border bg-card p-3 text-card-foreground", className)}
+      onSubmit={(event) => { event.preventDefault(); void add(); }}
+    >
+      <label className="block space-y-1 text-xs font-medium" htmlFor={id}>
+        <span>Task title</span>
+        <input id={id} className={fieldClass} required value={title} readOnly={busy}
+          onChange={(event) => { setTitle(event.currentTarget.value); setFeedback(null); }} />
+      </label>
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="min-w-0 flex-1 space-y-1 text-xs font-medium" htmlFor={id + "-due"}>
+          <span>Due date (optional)</span>
+          <input id={id + "-due"} type="date" className={fieldClass} value={dueDate} readOnly={busy}
+            onChange={(event) => { setDueDate(event.currentTarget.value); setFeedback(null); }} />
+        </label>
+        <Button type="submit" size="sm" loading={busy} disabled={!title.trim()}><PlusIcon aria-hidden="true" /> Add task</Button>
+      </div>
+      <div role="status" className="text-xs text-muted-foreground">
+        {feedback === "added" && "Task added."}
+      </div>
+      {feedback === "error" && <p role="alert" className="text-xs text-destructive">Couldn’t add task. Try again.</p>}
+    </form>
+  );
+}

@@ -1,0 +1,127 @@
+{
+  "name": "@sultanico/ai-ui",
+  "version": "0.4.0-dev.2",
+  "description": "Source-owned React 19 components for AI chat and agent interfaces, built on Tailwind CSS v4 and Base UI",
+  "type": "module",
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "Sultani Investments, LLC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gsultani1/marifai-ui.git"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./components/*": {
+      "types": "./dist/components/*.d.ts",
+      "default": "./dist/components/*.js"
+    },
+    "./hooks/*": {
+      "types": "./dist/hooks/*.d.ts",
+      "default": "./dist/hooks/*.js"
+    },
+    "./preset.css": "./src/styles/preset.css",
+    "./styles.css": "./src/styles/preset.css",
+    "./source": "./src/index.ts",
+    "./source/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check:css": "node scripts/check-css.mjs",
+    "check:package": "node scripts/check-package.mjs",
+    "test:browser": "node scripts/browser.mjs",
+    "dev": "vite",
+    "build:example": "vite build",
+    "prepare": "node -e \"process.exit(require('fs').existsSync('dist') ? 0 : 1)\" || npm run build"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.9.0",
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/lang-markdown": "^6.5.2",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/language-data": "^6.5.2",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
+    "@lezer/highlight": "^1.2.5",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
+    "clsx": "^2.1.1",
+    "codemirror": "^6.0.2",
+    "diff": "^9.0.0",
+    "hast-util-to-jsx-runtime": "^2.3.6",
+    "lowlight": "^3.3.0",
+    "lucide-react": "^1.61.0",
+    "prosemirror-commands": "^1.7.2",
+    "prosemirror-dropcursor": "^1.8.4",
+    "prosemirror-gapcursor": "^1.4.1",
+    "prosemirror-history": "^1.5.1",
+    "prosemirror-inputrules": "^1.5.1",
+    "prosemirror-keymap": "^1.2.3",
+    "prosemirror-model": "^1.25.12",
+    "prosemirror-schema-list": "^1.5.1",
+    "prosemirror-state": "^1.4.4",
+    "prosemirror-tables": "^1.8.5",
+    "prosemirror-transform": "^1.12.4",
+    "prosemirror-view": "^1.42.8",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "tailwind-merge": "^3.7.0",
+    "unified": "^11.0.5"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@eslint/js": "^9.39.5",
+    "@tailwindcss/cli": "^4.3.3",
+    "@tailwindcss/vite": "^4.3.3",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@types/hast": "^3.0.5",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "jsdom": "^26.1.0",
+    "playwright": "1.56.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.0",
+    "vite": "^7.3.7",
+    "vitest": "^3.2.7"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^4.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "homepage": "https://ui.marifai.com/",
+  "bugs": {
+    "url": "https://github.com/gsultani1/marifai-ui/issues"
+  }
+}

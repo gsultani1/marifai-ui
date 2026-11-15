@@ -1,0 +1,53 @@
+/* packages/ai-ui/example/style.css */
+@layer tokens, theme, base, components, utilities;
+
+@import "tailwindcss";
+@import "../src/styles/preset.css";
+@import "../brand/tokens.css";
+@import "../brand/fonts.css";
+
+@layer base {
+  :root,
+  :root[data-theme="dark"] {
+    --background: var(--mf-v2-color-surface-page);
+    --foreground: var(--mf-v2-color-text-primary);
+    --card: var(--mf-v2-color-surface-default);
+    --card-foreground: var(--mf-v2-color-text-primary);
+    --popover: var(--mf-v2-color-surface-raised);
+    --popover-foreground: var(--mf-v2-color-text-primary);
+    --primary: var(--mf-v2-color-accent-default);
+    --primary-foreground: var(--mf-v2-color-text-onaccent);
+    --secondary: var(--mf-v2-color-surface-sunken);
+    --secondary-foreground: var(--mf-v2-color-text-primary);
+    --muted: var(--mf-v2-color-surface-sunken);
+    --muted-foreground: var(--mf-v2-color-text-muted);
+    --accent: var(--mf-v2-color-accent-surface);
+    --accent-foreground: var(--mf-v2-color-text-primary);
+    --border: var(--mf-v2-color-border-decorative);
+    --input: var(--mf-v2-color-border-control);
+    --ring: var(--mf-v2-color-focus);
+    --success: var(--mf-v2-color-status-success-text);
+    --warning: var(--mf-v2-color-status-warning-text);
+    --destructive: var(--mf-v2-color-status-error-text);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--mf-v2-font-sans);
+  }
+
+  code, kbd, pre { font-family: var(--mf-v2-font-mono); }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--muted-foreground);
+    opacity: 1;
+  }
+}
