@@ -1,4 +1,4 @@
-// packages/ai-ui/test/vibe-coding-editor.test.tsx
+// test/vibe-coding-editor.test.tsx
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, expect, it, vi } from "vitest";
@@ -25,6 +25,7 @@ it("shares block selection and revision across layers, canvas edits and the assi
   }
   render(<Project />);
   fireEvent.click(screen.getByRole("treeitem", { name: /Storefront/ }));
+  fireEvent.click(screen.getByRole("button", { name: "Properties" }));
   expect(screen.getByRole("complementary", { name: "Block settings" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Add Image" }));
 
@@ -66,9 +67,10 @@ it("blocks stale proposals, shows file changes, and sends the expected revision 
   expect(button.disabled).toBe(true);
   fireEvent.submit(screen.getByRole("form", { name: "Apply proposal" }));
   expect(apply).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Inspect source changes" }));
   expect(screen.getByText(/src\/app.tsx · modified/)).toBeTruthy();
   rerender(<VibeBuilderChangeReview proposal={proposal} revision="1" onApply={apply} />);
-  fireEvent.click(screen.getByRole("button", { name: "Preview proposed design" }));
+  fireEvent.click(screen.getByRole("button", { name: "Show visual comparison" }));
   expect(screen.getByTitle("Proposed design preview").getAttribute("sandbox")).toBe("");
   fireEvent.click(within(screen.getByRole("form", { name: "Apply proposal" })).getByRole("button", { name: "Apply changes" }));
   expect(apply).toHaveBeenCalledExactlyOnceWith({ proposalId: "next", expectedRevision: "1" });

@@ -1,4 +1,4 @@
-// packages/ai-ui/scripts/check-package.mjs
+// scripts/check-package.mjs
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
