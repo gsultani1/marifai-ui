@@ -16,7 +16,7 @@ export function PageSelectionToolbar({ selection, onQuote, onAttach, className }
     {selection.trim() ? <>
       <blockquote className={contentBlock}>{selection}</blockquote>
       <div className="flex flex-wrap items-center gap-2">
-        <CopyButton value={selection} />
+        <CopyButton value={selection} label="Copy selection" />
         <ControlAction label="Quote selection" onClick={onQuote && (() => onQuote(selection))} />
         <ControlAction label="Add selection to context" onClick={onAttach && (() => onAttach(selection))} />
       </div>

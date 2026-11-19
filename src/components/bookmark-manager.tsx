@@ -1,7 +1,7 @@
 // packages/ai-ui/src/components/bookmark-manager.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AsyncForm, ChoiceField, ControlAction, ControlPanel, Field, fieldClass, ItemHeading, ItemList, matchesQuery, SearchField } from "../lib/component-controls.js";
 
 export interface BrowserBookmark {
@@ -27,11 +27,12 @@ function BookmarkEdit({ bookmark, folders, save, close }: {
   save: NonNullable<BookmarkManagerProps["onSave"]>; close: () => void;
 }) {
   const [title, setTitle] = useState(bookmark.title);
-  const [folder, setFolder] = useState(bookmark.folderId ?? "");
+  // A folder that no longer exists shows as "No folder", so the draft starts there too.
+  const [folder, setFolder] = useState(bookmark.folderId && folders.some((item) => item.id === bookmark.folderId) ? bookmark.folderId : "");
   return <AsyncForm label={"Edit " + bookmark.title} submitLabel="Save bookmark"
     validate={() => !title.trim() ? "Enter a bookmark name." : folder && !folders.some((item) => item.id === folder) ? "Select an available folder." : undefined}
     onSubmit={async () => { await save(bookmark.id, { title: title.trim(), folderId: folder || null }); close(); }}>
-    <Field label="Bookmark name"><input className={fieldClass} value={title} onChange={(event) => setTitle(event.currentTarget.value)} /></Field>
+    <Field label="Bookmark name"><input autoFocus className={fieldClass} value={title} onChange={(event) => setTitle(event.currentTarget.value)} /></Field>
     <ChoiceField label="Folder" value={folder} placeholder="No folder" options={folders.map(({ id, label }) => ({ value: id, label }))} onChange={setFolder} />
     <ControlAction label="Cancel editing" onClick={close} />
   </AsyncForm>;
@@ -40,16 +41,29 @@ function BookmarkEdit({ bookmark, folders, save, close }: {
 export function BookmarkManager({ bookmarks, folders, onOpen, onSave, onRemove, className }: BookmarkManagerProps) {
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
+  const list = useRef<HTMLDivElement>(null);
+  const returnFocus = useRef<string | null>(null);
+  // Closing the editor removes the focused control, so focus goes back to the bookmark's Edit button.
+  useEffect(() => {
+    if (editing !== null || returnFocus.current === null) return;
+    const bookmark = bookmarks.find((item) => item.id === returnFocus.current);
+    returnFocus.current = null;
+    if (!bookmark) return;
+    Array.from(list.current?.querySelectorAll("button") ?? []).find((button) => button.getAttribute("aria-label") === "Edit " + bookmark.title)?.focus();
+  }, [editing, bookmarks]);
   return <ControlPanel slot="bookmark-manager" title="Bookmarks" className={className}>
     <SearchField label="Search bookmarks" value={query} onChange={setQuery} />
-    <ItemList items={bookmarks.filter((item) => matchesQuery(query, item.title, item.address, folders.find((folder) => folder.id === item.folderId)?.label))}
-      empty="No matching bookmarks." render={(item) => <>
-        <ItemHeading title={item.title} detail={item.address}>
-          <ControlAction label="Open" item={item.title} onClick={onOpen && (() => onOpen(item.id))} />
-          <ControlAction label="Edit" item={item.title} onClick={onSave && (() => setEditing(item.id))} disabled={editing === item.id} />
-          <ControlAction label="Remove" item={item.title} onClick={onRemove && (() => onRemove(item.id))} />
-        </ItemHeading>
-        {editing === item.id && onSave && <BookmarkEdit bookmark={item} folders={folders} save={onSave} close={() => setEditing(null)} />}
-      </>} />
+    <div ref={list}>
+      <ItemList items={bookmarks.filter((item) => matchesQuery(query, item.title, item.address, folders.find((folder) => folder.id === item.folderId)?.label))}
+        empty={bookmarks.length ? "No matching bookmarks." : "No bookmarks yet."} render={(item) => <>
+          <ItemHeading title={item.title} detail={item.address}>
+            <ControlAction label="Open" item={item.title} onClick={onOpen && (() => onOpen(item.id))} />
+            <ControlAction label="Edit" item={item.title} onClick={onSave && (() => setEditing(item.id))} disabled={editing === item.id} />
+            <ControlAction label="Remove" item={item.title} onClick={onRemove && (() => onRemove(item.id))} />
+          </ItemHeading>
+          {editing === item.id && onSave && <BookmarkEdit bookmark={item} folders={folders} save={onSave}
+            close={() => { returnFocus.current = item.id; setEditing(null); }} />}
+        </>} />
+    </div>
   </ControlPanel>;
 }

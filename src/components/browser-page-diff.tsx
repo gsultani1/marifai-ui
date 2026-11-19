@@ -15,8 +15,10 @@ export interface BrowserPageDiffProps {
 export function BrowserPageDiff({ before, after, className }: BrowserPageDiffProps) {
   const [mode, setMode] = useState<"unified" | "split">("unified");
   return <ControlPanel slot="browser-page-diff" title="Page changes" className={className}>
-    <ChoiceField label="Diff layout" value={mode} options={[{ value: "unified", label: "Unified" }, { value: "split", label: "Side by side" }]}
-      onChange={(value) => { if (value) setMode(value); }} />
-    <DiffView oldTitle={before.label} oldValue={before.text} newTitle={after.label} newValue={after.text} mode={mode} />
+    {before.text === after.text ? <p className="text-sm text-muted-foreground">No changes between {before.label} and {after.label}.</p> : <>
+      <ChoiceField label="Diff layout" value={mode} options={[{ value: "unified", label: "Unified" }, { value: "split", label: "Side by side" }]}
+        onChange={(value) => { if (value) setMode(value); }} />
+      <DiffView oldTitle={before.label} oldValue={before.text} newTitle={after.label} newValue={after.text} mode={mode} />
+    </>}
   </ControlPanel>;
 }

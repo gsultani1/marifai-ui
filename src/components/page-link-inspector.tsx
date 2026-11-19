@@ -24,10 +24,10 @@ export function PageLinkInspector({ links, onInspect, className }: PageLinkInspe
   return <ControlPanel slot="page-link-inspector" title="Page links" className={className}>
     <SearchField label="Search links" value={query} onChange={setQuery} />
     {groups.size ? [...groups].map(([domain, group]) => <details key={domain} open className="space-y-2">
-      <summary className="cursor-pointer break-all text-sm font-medium">{domain} · {group.length}</summary>
-      <ItemList items={group} empty="No links." render={(item) => <ItemHeading title={item.label} detail={item.address}>
-        <ControlAction label="Inspect" item={item.label} onClick={() => onInspect(item.id)} />
+      <summary className="cursor-pointer break-all text-sm font-medium">{domain} · {group.length} {group.length === 1 ? "link" : "links"}</summary>
+      <ItemList items={group} empty="No links." render={(item) => <ItemHeading title={item.label || item.address} detail={item.address}>
+        <ControlAction label="Inspect" item={item.label || item.address} onClick={() => onInspect(item.id)} />
       </ItemHeading>} />
-    </details>) : <p className="text-sm text-muted-foreground">No matching links.</p>}
+    </details>) : <p className="text-sm text-muted-foreground">{links.length ? "No matching links." : "No links on this page."}</p>}
   </ControlPanel>;
 }

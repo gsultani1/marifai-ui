@@ -21,7 +21,7 @@ export function BrowserHistoryList({ visits, onOpen, className }: BrowserHistory
   const [query, setQuery] = useState("");
   return <ControlPanel slot="browser-history-list" title="Browser history" className={className}>
     <SearchField label="Search visits" value={query} onChange={setQuery} />
-    <ItemList items={visits.filter((visit) => matchesQuery(query, visit.title, visit.address))} empty="No matching visits." render={(visit) =>
+    <ItemList items={visits.filter((visit) => matchesQuery(query, visit.title, visit.address))} empty={visits.length ? "No matching visits." : "No browsing history."} render={(visit) =>
       <ItemHeading title={visit.title} detail={visit.address + " · " + visit.visitedAt}>
         <ControlAction label="Open" item={visit.title} onClick={() => onOpen(visit.id)} />
       </ItemHeading>

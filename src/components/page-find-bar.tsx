@@ -19,15 +19,20 @@ export function PageFindBar({ query, onQueryChange, currentMatch, matchCount, on
   const disabled = !query.trim() || Boolean(pending) || matchCount < 1;
   return <ControlPanel slot="page-find-bar" title="Find on page" className={className}>
     <div onKeyDown={(event) => {
-      if (event.key === "Enter" && event.target instanceof HTMLInputElement && !disabled) {
+      if (!(event.target instanceof HTMLInputElement)) return;
+      if (event.key === "Enter" && !disabled) {
         event.preventDefault();
         onMove(event.shiftKey ? "previous" : "next");
+      } else if (event.key === "Escape" && onClose) {
+        event.preventDefault();
+        onClose();
       }
     }}>
       <SearchField label="Find text" value={query} onChange={onQueryChange} />
     </div>
     <div className="flex flex-wrap items-center gap-2">
-      <span role="status" className="text-sm text-muted-foreground">{pending ? "Searching…" : query.trim() ? currentMatch !== null ? currentMatch + " of " + matchCount : matchCount + " matches" : ""}</span>
+      <span role="status" className="text-sm text-muted-foreground">{pending ? "Searching…" : !query.trim() ? ""
+        : matchCount < 1 ? "No matches" : currentMatch !== null ? currentMatch + " of " + matchCount : matchCount + (matchCount === 1 ? " match" : " matches")}</span>
       <ControlAction label="Previous match" disabled={disabled} onClick={() => onMove("previous")} />
       <ControlAction label="Next match" disabled={disabled} onClick={() => onMove("next")} />
       <ControlAction label="Close find bar" onClick={onClose} />

@@ -28,7 +28,7 @@ export function BrowserSessionRestore({ windows, onRestore, className }: Browser
     tabIds: window.tabs.filter((tab) => checked.includes(JSON.stringify([window.id, tab.id]))).map((tab) => tab.id),
   })).filter((window) => window.tabIds.length);
   return <ControlPanel slot="browser-session-restore" title="Restore browser session" className={className}>
-    <AsyncForm label="Restore browser session" submitLabel="Restore selected tabs" disabled={!selection.length} onSubmit={() => onRestore(selection)}>
+    <AsyncForm label="Restore browser session" submitLabel="Restore selected tabs" disabled={!selection.length} onSubmit={async () => { await onRestore(selection); setChecked([]); }}>
       <TreeView label="Windows and tabs" nodes={nodes} selectionMode="none" checkboxes checked={checked} onCheckedChange={setChecked} emptyLabel="No windows to restore." />
     </AsyncForm>
   </ControlPanel>;
