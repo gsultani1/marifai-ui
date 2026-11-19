@@ -23,7 +23,11 @@ export function AgentEscalationCard({ escalationId, title, description, decision
     <ItemList items={decisions} empty="No decisions available." render={(item) => <ItemHeading title={item.label}
       detail={[item.effect,item.unavailableReason].filter(Boolean).join(" · ")} />} />
     <AsyncForm key={escalationId} label="Agent escalation decision" submitLabel="Submit decision"
-      disabled={!selected || Boolean(selected.unavailableReason)} onSubmit={() => { if (selected) return onDecide(escalationId,selected.id); }}>
+      disabled={!selected || Boolean(selected.unavailableReason)} onSubmit={async () => {
+        if (!selected) return;
+        await onDecide(escalationId,selected.id);
+        setChoice(undefined);
+      }}>
       <ChoiceField label="Decision" value={selected?.id ?? ""} placeholder="Choose a decision"
         options={decisions.map((item) => ({value:item.id,label:item.label,disabled:Boolean(item.unavailableReason)}))}
         onChange={(id) => setChoice({ escalationId,id })} />

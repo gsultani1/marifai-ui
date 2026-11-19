@@ -16,6 +16,7 @@ export interface RunRecoveryPanelProps {
 
 export function RunRecoveryPanel({ checkpoints, onResume, onRestart, pending, restartUnavailableReason, className }: RunRecoveryPanelProps) {
   return <ControlPanel slot="run-recovery-panel" title="Run recovery" className={className}>
+    <p role="status" className={pending ? "text-sm text-muted-foreground" : "sr-only"}>{pending ? "Recovery in progress." : ""}</p>
     <ItemList items={checkpoints} empty="No checkpoints available." render={(item) => <ItemHeading title={item.label}
       detail={item.unavailableReason ?? "Available"}>
       <ControlAction label="Resume from" item={item.label} disabled={pending || Boolean(item.unavailableReason)} onClick={onResume && (() => onResume(item.id))} />

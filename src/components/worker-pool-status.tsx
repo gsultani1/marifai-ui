@@ -11,11 +11,13 @@ export interface WorkerPoolStatusProps {
   className?: string;
 }
 
+const statusLabels: Record<ReportedWorker["status"], string> = { available: "Available", busy: "Busy", offline: "Offline" };
+
 export function WorkerPoolStatus({ workers, onOpen, className }: WorkerPoolStatusProps) {
   return <ControlPanel slot="worker-pool-status" title="Worker pool" className={className}>
-    <p className="text-sm">{workers.filter((item) => item.status === "available").length} available of {workers.length} workers</p>
-    <ItemList items={workers} empty="No workers available." render={(item) => <ItemHeading title={item.name}
-      detail={[item.status,item.activeWork,item.lastHeartbeat ? "Last heartbeat " + item.lastHeartbeat : null].filter(Boolean).join(" · ")}>
+    <p className="text-sm">{workers.filter((item) => item.status === "available").length} available of {workers.length} {workers.length === 1 ? "worker" : "workers"}</p>
+    <ItemList items={workers} empty="No workers in this pool." render={(item) => <ItemHeading title={item.name}
+      detail={[statusLabels[item.status],item.activeWork,item.lastHeartbeat ? "Last heartbeat " + item.lastHeartbeat : null].filter(Boolean).join(" · ")}>
       <ControlAction label="Open worker" item={item.name} onClick={onOpen && (() => onOpen(item.id))} />
     </ItemHeading>} />
   </ControlPanel>;

@@ -15,7 +15,7 @@ export function AgentArtifactInbox({ artifacts, onOpen, className }: AgentArtifa
   return <ControlPanel slot="agent-artifact-inbox" title="Agent artifacts" className={className}>
     <FilteredList items={artifacts} searchLabel="Search artifacts" searchText={(item) => [item.title, item.agent, item.kind]}
       filterLabel="Kind" filters={[...new Set(artifacts.map((item) => item.kind))].map((value) => ({ value, label: value }))} category={(item) => item.kind}
-      empty="No matching artifacts." render={(item) => <ItemHeading title={item.title} detail={item.agent + " · " + item.kind + (item.available === false ? " · Unavailable" : "")}>
+      empty={artifacts.length ? "No matching artifacts." : "No agent artifacts yet."} render={(item) => <ItemHeading title={item.title} detail={item.agent + " · " + item.kind + (item.available === false ? " · Unavailable" : "")}>
         <ControlAction label="Open" item={item.title} disabled={item.available === false} onClick={() => onOpen(item.id)} />
       </ItemHeading>} />
   </ControlPanel>;

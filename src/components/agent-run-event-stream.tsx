@@ -19,11 +19,13 @@ export function AgentRunEventStream({ events, onOpen, className }: AgentRunEvent
     if (!cutoff && viewport.current) viewport.current.scrollTop = viewport.current.scrollHeight;
   }, [cutoff, last, events.length]);
   const visible = cutoff ? events.filter((item) => cutoff.has(item.id)) : events;
+  const waiting = events.length - visible.length;
   return <ControlPanel slot="agent-run-event-stream" title="Run events" className={className}>
     <ControlAction label={cutoff ? "Follow latest" : "Pause following"}
       onClick={() => setCutoff(cutoff ? null : new Set(events.map((item) => item.id)))} />
-    {cutoff && <p role="status" className="text-sm text-muted-foreground">{events.length - visible.length} new events</p>}
-    <div ref={viewport} role="log" aria-label="Run event stream" className="max-h-72 overflow-y-auto">
+    <p role="status" className={cutoff ? "text-sm text-muted-foreground" : "sr-only"}>{cutoff ? waiting + (waiting === 1 ? " new event" : " new events") : ""}</p>
+    <div ref={viewport} role="log" aria-label="Run event stream" tabIndex={0}
+      className="max-h-72 overflow-y-auto rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
       <ItemList items={visible} empty="No run events." render={(item) => <ItemHeading title={item.title}
         detail={[item.timestamp,item.detail].filter(Boolean).join(" · ")}>
         <ControlAction label="Open event" item={item.title} onClick={onOpen && (() => onOpen(item.id))} />

@@ -12,11 +12,13 @@ export interface RunBudgetBreakdownProps {
   className?: string;
 }
 
+const labels = { reserved: "Reserved", settled: "Settled", released: "Released", uncertain: "Uncertain" } as const;
+
 export function RunBudgetBreakdown({ amounts, currency, className }: RunBudgetBreakdownProps) {
   return <ControlPanel slot="run-budget-breakdown" title="Run budget breakdown" className={className}>
     <dl className="grid gap-2 text-sm sm:grid-cols-2">
-      {(["reserved","settled","released","uncertain"] as const).map((key) => <div key={key}>
-        <dt className="capitalize text-muted-foreground">{key}</dt>
+      {(Object.keys(labels) as (keyof typeof labels)[]).map((key) => <div key={key}>
+        <dt className="text-muted-foreground">{labels[key]}</dt>
         <dd className="tabular-nums">{amounts[key] === undefined ? "Unavailable" : amounts[key] + " " + currency}</dd>
       </div>)}
     </dl>

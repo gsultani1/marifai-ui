@@ -20,11 +20,15 @@ export function AgentMailbox({ messages, onOpen, className }: AgentMailboxProps)
   const active = agents.some((item) => item.value === agent) ? agent : "";
   const visible = messages.filter((item) => (!active || active === item.agentId) && (!unread || item.unread)
     && matchesQuery(query, item.agent, item.subject, item.excerpt));
+  const filtered = Boolean(active || unread || query.trim());
   return <ControlPanel slot="agent-mailbox" title="Agent mailbox" className={className}>
     <SearchField label="Search agent messages" value={query} onChange={setQuery} />
     <ChoiceField label="Agent" value={active} options={agents} placeholder="All agents" onChange={setAgent} />
     <label className="text-sm"><input type="checkbox" checked={unread} onChange={(event) => setUnread(event.currentTarget.checked)} /> Unread only</label>
-    <ItemList items={visible} empty="No matching messages." render={(item) => <ItemHeading title={item.subject}
+    <p role="status" className={filtered ? "text-xs text-muted-foreground" : "sr-only"}>
+      {filtered ? visible.length + (visible.length === 1 ? " matching message" : " matching messages") : ""}
+    </p>
+    <ItemList items={visible} empty={messages.length ? "No matching messages." : "No agent messages yet."} render={(item) => <ItemHeading title={item.subject}
       detail={[item.agent, item.unread ? "Unread" : null, item.excerpt].filter(Boolean).join(" · ")}>
       <ControlAction label="Open" item={item.subject} onClick={() => onOpen(item.id)} />
     </ItemHeading>} />
