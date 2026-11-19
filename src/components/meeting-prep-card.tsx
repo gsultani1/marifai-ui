@@ -15,6 +15,8 @@ export interface MeetingPrepCardProps {
 export function MeetingPrepCard({ meeting, onOpenMaterial, className }: MeetingPrepCardProps) {
   return <ControlPanel slot="meeting-prep-card" title="Meeting preparation" className={className}>
     <ItemHeading title={meeting.title} detail={meeting.time} />
+    {!meeting.agenda.length && !meeting.attendees.length && !meeting.questions.length && !meeting.materials.length &&
+      <p className="text-sm text-muted-foreground">No preparation notes yet.</p>}
     {([{label:"Agenda",items:meeting.agenda},{label:"Attendees",items:meeting.attendees},{label:"Open questions",items:meeting.questions}]).map(({label,items}) => items.length > 0 &&
       <details key={label} open={label === "Agenda"}><summary className="cursor-pointer text-sm font-medium">{label} · {items.length}</summary>
         <ul className="list-disc ps-5 text-sm">{items.map((item,index) => <li key={index} className="break-words">{item}</li>)}</ul>

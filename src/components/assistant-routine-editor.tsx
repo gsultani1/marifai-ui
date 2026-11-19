@@ -29,6 +29,7 @@ export function AssistantRoutineEditor({ initialValue, timeZones, onSubmit, clas
   const prefix = useId();
   const counter = useRef(0);
   function update(update: Partial<AssistantRoutineDraft>) { setValue((current) => ({...current,...update})); }
+  function stepName(item: AssistantRoutineStep) { return item.title.trim() || "Step " + (value.steps.indexOf(item)+1); }
   function addStep() {
     const title = step.trim();
     if (!title) return;
@@ -54,11 +55,17 @@ export function AssistantRoutineEditor({ initialValue, timeZones, onSubmit, clas
           const title = event.currentTarget.value;
           update({steps:value.steps.map((entry) => entry.id === item.id ? {...entry,title} : entry)});
         }} /></Field>
-        <ControlAction label="Remove step" item={item.title} onClick={() => update({steps:value.steps.filter((entry) => entry.id !== item.id)})} />
+        <ControlAction label="Remove step" item={stepName(item)} onClick={() => update({steps:value.steps.filter((entry) => entry.id !== item.id)})} />
       </div>} />
-      {value.steps.length > 1 && <OrderedList items={value.steps} label="Routine step order" itemLabel={(item) => item.title}
+      {value.steps.length > 1 && <OrderedList items={value.steps} label="Routine step order" itemLabel={stepName}
         onReorder={(ids) => update({steps:ids.flatMap((id) => value.steps.filter((item) => item.id === id))})} />}
-      <Field label="New step"><input className={fieldClass} value={step} onChange={(event) => setStep(event.currentTarget.value)} /></Field>
+      <Field label="New routine step"><input className={fieldClass} value={step} onChange={(event) => setStep(event.currentTarget.value)}
+        onKeyDown={(event) => {
+          // Enter adds the typed step instead of submitting the whole routine.
+          if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+          event.preventDefault();
+          addStep();
+        }} /></Field>
       <ControlAction label="Add step" disabled={!step.trim()} onClick={addStep} />
       <ChoiceField label="Repeat" value={value.frequency} options={[{value:"manual",label:"Manual"},{value:"daily",label:"Daily"},{value:"weekly",label:"Weekly"}]}
         onChange={(frequency) => { if (frequency) update({frequency}); }} />

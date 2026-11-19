@@ -12,11 +12,17 @@ export interface AssistantDailyBriefingProps {
   className?: string;
 }
 
+const sections = [
+  { key: "agenda", title: "Agenda", empty: "No agenda items today." },
+  { key: "priorities", title: "Priorities", empty: "No priorities set." },
+  { key: "followUps", title: "Follow-ups", empty: "No follow-ups due." },
+] as const;
+
 export function AssistantDailyBriefing({ briefing, onOpen, className }: AssistantDailyBriefingProps) {
   return <ControlPanel slot="assistant-daily-briefing" title="Daily briefing" className={className}>
-    {(["agenda", "priorities", "followUps"] as const).map((section) => <div key={section} className="space-y-1">
-      <h4 className="text-sm font-medium">{section === "agenda" ? "Agenda" : section === "priorities" ? "Priorities" : "Follow-ups"}</h4>
-      <ItemList items={briefing[section]} empty="Nothing scheduled here." render={(item) => <ItemHeading title={item.title} detail={item.detail}>
+    {sections.map(({ key: section, title, empty }) => <div key={section} className="space-y-1">
+      <h4 className="text-sm font-medium">{title}</h4>
+      <ItemList items={briefing[section]} empty={empty} render={(item) => <ItemHeading title={item.title} detail={item.detail}>
         <ControlAction label="Open" item={item.title} onClick={onOpen && (() => onOpen(section, item.id))} />
       </ItemHeading>} />
     </div>)}

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { AsyncForm, ChoiceField, ControlPanel, Field, fieldClass, ItemList } from "../lib/component-controls.js";
+import { AsyncForm, ControlPanel, Field, fieldClass, ItemList } from "../lib/component-controls.js";
 
 export interface MeetingActionSuggestion { id: string; title: string; detail?: string }
 export type MeetingActionDecision = "accept" | "dismiss";
@@ -19,9 +19,11 @@ function ActionReview({ item, onDecide }: { item: MeetingActionSuggestion; onDec
     return onDecide(item.id,decision,title.trim());
   }}>
     {item.detail && <p className="text-sm text-muted-foreground">{item.detail}</p>}
-    <Field label="Action title"><input className={fieldClass} value={title} onChange={(event) => setTitle(event.currentTarget.value)} /></Field>
-    <ChoiceField label="Action decision" value={decision} options={[{value:"accept",label:"Accept"},{value:"dismiss",label:"Dismiss"}]}
-      onChange={(value) => { if (value) setDecision(value); }} />
+    <Field label="Action title"><input className={fieldClass} aria-label={"Action title for " + item.title} value={title} onChange={(event) => setTitle(event.currentTarget.value)} /></Field>
+    <Field label="Action decision"><select className={fieldClass} aria-label={"Action decision for " + item.title} value={decision}
+      onChange={(event) => setDecision(event.currentTarget.value === "dismiss" ? "dismiss" : "accept")}>
+      <option value="accept">Accept</option><option value="dismiss">Dismiss</option>
+    </select></Field>
   </AsyncForm>;
 }
 export function MeetingActionsReview({ actions, onDecide, className }: MeetingActionsReviewProps) {

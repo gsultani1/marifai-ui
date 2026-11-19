@@ -16,12 +16,12 @@ export interface AssistantDailyPlanEditorProps {
 
 export function AssistantDailyPlanEditor({ tasks, blocks, onReorder, onPlace, className }: AssistantDailyPlanEditorProps) {
   return <ControlPanel slot="assistant-daily-plan-editor" title="Daily plan" className={className}>
-    <OrderedList items={tasks} label="Daily priorities" itemLabel={(item) => item.title} onReorder={onReorder}
+    {!tasks.length ? <p className="text-sm text-muted-foreground">No tasks to plan.</p> : <OrderedList items={tasks} label="Daily priorities" itemLabel={(item) => item.title} onReorder={onReorder}
       render={(item) => <>
         <strong className="block font-medium">{item.title}</strong>
         <ChoiceField label={"Time block for " + item.title} value={item.blockId ?? ""} placeholder="Unscheduled"
-          options={blocks.map((block) => ({value:block.id,label:block.label,disabled:block.unavailable}))}
+          options={blocks.map((block) => ({value:block.id,label:block.unavailable ? block.label + " · Unavailable" : block.label,disabled:block.unavailable}))}
           onChange={(blockId) => onPlace(item.id,blockId || null)} />
-      </>} />
+      </>} />}
   </ControlPanel>;
 }

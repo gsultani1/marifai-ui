@@ -17,9 +17,9 @@ export function AssistantConflictReview({ conflicts, onChoose, pendingIds = [], 
   return <ControlPanel slot="assistant-conflict-review" title="Schedule conflicts" className={className}>
     <ItemList items={conflicts} empty="No overlapping commitments." render={(item) => <>
       <h4 className="text-sm font-medium">{item.title}</h4>
-      <ul className="list-disc ps-5 text-sm">{item.commitments.map((commitment, index) => <li key={index}>{commitment}</li>)}</ul>
+      {item.commitments.length > 0 && <ul className="list-disc ps-5 text-sm">{item.commitments.map((commitment, index) => <li key={index} className="break-words">{commitment}</li>)}</ul>}
       <ItemList items={item.resolutions} empty="No resolutions available." render={(option) => <ItemHeading title={option.label} detail={option.detail}>
-        <ControlAction label="Choose" item={option.label} disabled={pendingIds.includes(item.id)} onClick={() => onChoose(item.id, option.id)} />
+        <ControlAction label="Choose" item={option.label + " for " + item.title} disabled={pendingIds.includes(item.id)} onClick={() => onChoose(item.id, option.id)} />
       </ItemHeading>} />
     </>} />
   </ControlPanel>;

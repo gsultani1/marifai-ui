@@ -16,6 +16,13 @@ export interface AssistantDraftReviewProps {
 export function AssistantDraftReview({ initialText, recipient, onDecide, className }: AssistantDraftReviewProps) {
   const [text, setText] = useState(initialText);
   const [decision, setDecision] = useState<AssistantDraftDecision>("approve");
+  const [source, setSource] = useState(initialText);
+  if (source !== initialText) {
+    // A new draft from the assistant replaces the edited one and starts a fresh decision.
+    setSource(initialText);
+    setText(initialText);
+    setDecision("approve");
+  }
   return <ControlPanel slot="assistant-draft-review" title="Review draft" className={className}>
     {recipient && <p className="text-sm break-words">Recipient · {recipient}</p>}
     <AsyncForm label="Review assistant draft" submitLabel="Submit decision" onSubmit={() => {
