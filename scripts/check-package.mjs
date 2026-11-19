@@ -37,6 +37,10 @@ import {
 } from "@sultanico/ai-ui";
 import { Message as DirectMessage } from "@sultanico/ai-ui/components/message";
 import { useStickToBottom } from "@sultanico/ai-ui/hooks/use-stick-to-bottom";
+import { TaskQuickAdd } from "@sultanico/ai-ui/experimental";
+import { TaskQuickAdd as DirectTaskQuickAdd } from "@sultanico/ai-ui/experimental/task-quick-add";
+// @ts-expect-error experimental components are not exported from the main entry point
+import type { TaskQuickAddProps } from "@sultanico/ai-ui";
 
 import {
   VibeCodingEditor, PageBuilderInspector, createBuilderDocument, createCustomBuilderBlock,
@@ -196,6 +200,13 @@ const general = (
   </>
 );
 
+const experimental = (
+  <>
+    <TaskQuickAdd onAdd={noop} />
+    <DirectTaskQuickAdd onAdd={noop} />
+  </>
+);
+
 // @ts-expect-error message authors are limited to user, assistant and system
 const invalidRole = <Message from="tool" />;
 // @ts-expect-error previews never accept allow-same-origin
@@ -206,7 +217,7 @@ void invalidRole;
 void unsafePreview;
 void invalidStatus;
 
-console.log(renderToStaticMarkup(view) + renderToStaticMarkup(general));
+console.log(renderToStaticMarkup(view) + renderToStaticMarkup(general) + renderToStaticMarkup(experimental));
 `;
 
 const OWNED = `import { Message, MessageBody, MessageContent } from "./owned-ui/index.js";
@@ -233,7 +244,10 @@ try {
     "dist/index.d.ts",
     "dist/components/message.js",
     "dist/components/code-editor-view.js",
+    "dist/experimental/index.js",
+    "dist/experimental/index.d.ts",
     "src/index.ts",
+    "src/experimental/index.ts",
     "src/styles/preset.css",
   ]) {
     assert.ok(paths.has(expected), `tarball is missing ${expected}`);
@@ -285,10 +299,10 @@ try {
   );
   run(process.execPath, [resolve(consumer, "node_modules/typescript/bin/tsc")], consumer);
   pass("public API, subpath exports and copied source typecheck in a strict consumer");
-  pass("negative type checks reject an unknown author, allow-same-origin and an unknown tool status");
+  pass("negative type checks reject an unknown author, allow-same-origin, an unknown tool status and experimental imports from the main entry point");
 
   const markup = run(process.execPath, [resolve(consumer, "out/consumer.js")], consumer);
-  for (const needle of [">Installed</strong>", 'aria-label="Send message"', 'role="separator"', "Content-Security-Policy", "Server rendered copy", "Store reset report", 'aria-label="Heading: Spring sale"', 'data-slot="button"', ">Weekly sales<", 'data-slot="qr-code"', 'data-slot="site-header"', 'data-slot="calendar-heatmap"', 'data-slot="pricing-table"', 'data-slot="time-picker"', 'data-slot="tree-view"', "application/ld+json"]) {
+  for (const needle of [">Installed</strong>", 'aria-label="Add a task"','aria-label="Send message"', 'role="separator"', "Content-Security-Policy", "Server rendered copy", "Store reset report", 'aria-label="Heading: Spring sale"', 'data-slot="button"', ">Weekly sales<", 'data-slot="qr-code"', 'data-slot="site-header"', 'data-slot="calendar-heatmap"', 'data-slot="pricing-table"', 'data-slot="time-picker"', 'data-slot="tree-view"', "application/ld+json"]) {
     assert.ok(markup.includes(needle), `server markup is missing ${needle}`);
   }
   assert.ok(!markup.includes("bad()"), "server markup kept a script from HtmlEditor content");
@@ -309,6 +323,9 @@ try {
   const consumerRequire = createRequire(resolve(consumer, "package.json"));
   assert.equal(consumerRequire.resolve("@sultanico/ai-ui/styles.css"), consumerRequire.resolve("@sultanico/ai-ui/preset.css"));
   pass("the earlier styles.css export still resolves, to the preset");
+
+  assert.throws(() => consumerRequire.resolve("@sultanico/ai-ui/components/task-quick-add"), /Cannot find module/);
+  pass("experimental components resolve only from the experimental entry point");
 
   const evidence = {
     artifact: pack.filename,

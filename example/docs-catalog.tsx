@@ -19,13 +19,14 @@ import {
   TaskInbox,
   Textarea,
 } from "../src/index.js";
+import experimentalIndex from "../src/experimental/index.ts?raw";
 import publicIndex from "../src/index.ts?raw";
 
 export const PACKAGE = "@sultanico/ai-ui";
 export const INSTALL = `npm install ${PACKAGE}`;
 export const PRESET = `@import "tailwindcss";\n@import "${PACKAGE}/preset.css";`;
 
-const GROUPS = ["AI & Chat", "Agents & Tools", "Editors & Files", "Browser", "Tasks & Automation", "Forms & Controls", "Foundations"] as const;
+const GROUPS = ["AI & Chat", "Agents & Tools", "Editors & Files", "Browser", "Tasks & Automation", "Forms & Controls", "Foundations", "Experimental"] as const;
 export const CATEGORIES = GROUPS;
 export type Category = typeof GROUPS[number];
 
@@ -158,6 +159,8 @@ export interface CatalogEntry {
   name: string;
   names: { local: string; exported: string }[];
   category: Category;
+  /** Exported from `@sultanico/ai-ui/experimental` rather than the main entry point. */
+  experimental: boolean;
   example?: Example;
 }
 
@@ -171,8 +174,8 @@ function classify(id: string): Category {
   return "Foundations";
 }
 
-export const catalog: CatalogEntry[] = [...publicIndex.matchAll(/export\s*\{([^{}]+)\}\s*from "\.\/components\/([\w-]+)\.js";/g)]
-  .flatMap(([, symbols = "", id = ""]) => {
+function entriesFrom(source: string, pattern: RegExp, experimental: boolean): CatalogEntry[] {
+  return [...source.matchAll(pattern)].flatMap(([, symbols = "", id = ""]) => {
     const names = symbols.split(",").flatMap((symbol) => {
       const match = /^([A-Z]\w*)(?:\s+as\s+([A-Z]\w*))?$/.exec(symbol.trim());
       return match?.[1] ? [{ local: match[1], exported: match[2] ?? match[1] }] : [];
@@ -180,9 +183,15 @@ export const catalog: CatalogEntry[] = [...publicIndex.matchAll(/export\s*\{([^{
     const normal = (value: string) => value.replaceAll("-", "").toLowerCase();
     const primary = names.find(({ exported }) => normal(exported) === normal(id)) ?? names[0];
     const example = EXAMPLES[id];
-    return primary ? [{ id, name: primary.exported, names, category: classify(id), ...(example ? { example } : {}) }] : [];
-  })
-  .sort((a, b) => a.name.localeCompare(b.name));
+    const category = experimental ? "Experimental" : classify(id);
+    return primary ? [{ id, name: primary.exported, names, category, experimental, ...(example ? { example } : {}) }] : [];
+  });
+}
+
+export const catalog: CatalogEntry[] = [
+  ...entriesFrom(publicIndex, /export\s*\{([^{}]+)\}\s*from "\.\/components\/([\w-]+)\.js";/g, false),
+  ...entriesFrom(experimentalIndex, /export\s*\{([^{}]+)\}\s*from "\.\/([\w-]+)\.js";/g, true),
+].sort((a, b) => a.name.localeCompare(b.name));
 
 export const featured = ["message", "action-approval", "vibe-coding-editor", "diff-view", "browser-tab-strip", "task-inbox",
   "button", "tabs", "switch", "textarea", "badge", "progress", "code-block"]

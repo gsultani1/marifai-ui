@@ -3,7 +3,7 @@ import "./docs.css";
 
 import {
   ArrowDownIcon, ArrowRightIcon, ArrowUpRightIcon, BookOpenIcon, BoxesIcon, BracesIcon,
-  CheckIcon, ChevronRightIcon, Code2Icon, Columns2Icon, FileCode2Icon, GitCompareArrowsIcon,
+  CheckIcon, ChevronRightIcon, Code2Icon, Columns2Icon, FileCode2Icon, FlaskConicalIcon, GitCompareArrowsIcon,
   LayoutGridIcon, MessageSquareIcon, MoonIcon, PackageIcon, SearchIcon, SendIcon,
   SparklesIcon, SunIcon, TerminalIcon, WorkflowIcon,
 } from "lucide-react";
@@ -41,6 +41,7 @@ const categoryIcons = {
   "Tasks & Automation": CheckIcon,
   "Forms & Controls": BracesIcon,
   Foundations: BoxesIcon,
+  Experimental: FlaskConicalIcon,
 } satisfies Record<Category, typeof BoxesIcon>;
 
 type Route =
@@ -324,14 +325,15 @@ function ComponentDocs({ id }: { id: string }) {
 
   const symbols = id === "tabs" ? ["Tabs", "TabsList", "TabsTrigger", "TabsContent"] : [entry.name];
   const example = entry.example;
-  const rootImport = `import { ${symbols.join(", ")} } from "${PACKAGE}";`;
+  const rootImport = `import { ${symbols.join(", ")} } from "${PACKAGE}${entry.experimental ? "/experimental" : ""}";`;
   const directImports = entry.names.map(({ local, exported }) => local === exported ? local : `${local} as ${exported}`);
-  const directImport = `import { ${directImports.join(", ")} } from "${PACKAGE}/components/${entry.id}";`;
+  const directImport = `import { ${directImports.join(", ")} } from "${PACKAGE}/${entry.experimental ? "experimental" : "components"}/${entry.id}";`;
 
   return (
     <article className="docs-article docs-detail">
       <div className="docs-crumb"><a href="#components">Components</a> <ChevronRightIcon size={14} aria-hidden="true" /> {entry.category}</div>
       <h1>{entry.name}</h1>
+      {entry.experimental && <p className="docs-description">Experimental: not yet covered by tests or examples. Its name, props and behavior can change in any release.</p>}
       {example && <p className="docs-description">{example.description}</p>}
       {example?.render && <section className="docs-detail-demo">
         <Tabs defaultValue="preview" variant="underline">
