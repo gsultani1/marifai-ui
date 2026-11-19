@@ -43,6 +43,7 @@ function partialTagLength(text: string, tags: readonly string[]): number {
  * Splits model output into prose and `<artifact …>…</artifact>` blocks. An
  * unclosed block is returned with `complete: false`; with `streaming`, a
  * half-written opening tag at the end is hidden instead of shown as text.
+ * Only an explicit `schema-version` opts a closed artifact into payload validation.
  */
 export function parseArtifactSegments(
   text: string,
@@ -62,7 +63,7 @@ export function parseArtifactSegments(
     const attributes = parseAttributes(match[2] ?? "");
     const value = stripFence(content);
     const complete = end !== -1;
-    if (complete && tag === "artifact" && ("kind" in attributes || "schema-version" in attributes)) {
+    if (complete && tag === "artifact" && Object.hasOwn(attributes, "schema-version")) {
       const payload = readArtifactPayload(attributes, value);
       if (payload) segments.push({ type: "artifact", tag, attributes, content: value, complete, payload });
       else segments.push({ type: "text", text: text.slice(match.index, end + tag.length + 3) });

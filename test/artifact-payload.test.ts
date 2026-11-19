@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { parseArtifactSegments } from "../src/lib/artifact-stream.js";
 
 const wrap = (kind: string, content: string, extra = "") =>
-  `<artifact kind="${kind}" slug="sample" title="Sample" ${extra}>${content}</artifact>`;
+  `<artifact schema-version="1" kind="${kind}" slug="sample" title="Sample" ${extra}>${content}</artifact>`;
 const chart = { chartType: "bar", xKey: "x", series: [{ key: "y", label: "Count" }], data: [{ x: "A", y: 3 }] };
 
 describe("completed version 1 artifacts", () => {
@@ -20,8 +20,8 @@ describe("completed version 1 artifacts", () => {
       wrap("code", "x"), wrap("markdown", " "), wrap("chart", "{"), wrap("other", "x"),
       wrap("chart", JSON.stringify({ ...chart, data: [{ y: 1 }] })),
       wrap("chart", JSON.stringify({ ...chart, data: [{ x: "A", y: "bad" }] })),
-      wrap("html", "x", 'schema-version="2"'),
-      '<artifact kind="html" title="Sample">x</artifact>',
+      '<artifact schema-version="2" kind="html" slug="sample" title="Sample">x</artifact>',
+      '<artifact schema-version="1" kind="html" title="Sample">x</artifact>',
     ]) {
       expect(parseArtifactSegments(input + wrap("markdown", "ok"))).toMatchObject([
         { type: "text", text: input }, { type: "artifact", payload: { kind: "markdown" } },
@@ -39,4 +39,15 @@ describe("completed version 1 artifacts", () => {
       expect(segment).not.toHaveProperty("payload");
     }
   });
+});
+
+it("preserves an unversioned code artifact while streaming and after it closes", () => {
+  const content = "const count = 1;";
+  const open = '<artifact kind="code" language="ts" title="Counter">' + content;
+  const closed = open + "</artifact>";
+  const artifact = { type: "artifact", tag: "artifact", attributes: { kind: "code", language: "ts", title: "Counter" }, content };
+
+  expect(parseArtifactSegments(open, { streaming: true })).toEqual([{ ...artifact, complete: false }]);
+  expect(parseArtifactSegments(closed, { streaming: true })).toEqual([{ ...artifact, complete: true }]);
+  expect(parseArtifactSegments(closed)).toEqual([{ ...artifact, complete: true }]);
 });

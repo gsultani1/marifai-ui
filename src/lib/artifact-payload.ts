@@ -33,7 +33,7 @@ export type ArtifactPayload = z.infer<typeof contract>;
 
 /** Version 1 represents charts as JSON in the tag body; other kinds carry text. */
 export function readArtifactPayload(attributes: Record<string, string>, content: string): ArtifactPayload | null {
-  if ((attributes["schema-version"] ?? "1") !== "1" || content.length > 200_000) return null;
+  if (attributes["schema-version"] !== "1" || content.length > 200_000) return null;
   let data: unknown;
   if (attributes.kind === "chart") {
     try { data = JSON.parse(content); } catch { return null; }
