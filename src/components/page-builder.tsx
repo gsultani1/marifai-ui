@@ -1,4 +1,4 @@
-// packages/ai-ui/src/components/page-builder.tsx
+// src/components/page-builder.tsx
 "use client";
 
 import {
@@ -21,7 +21,7 @@ import {
   UnfoldVerticalIcon,
   VideoIcon,
 } from "lucide-react";
-import { type DragEvent, type KeyboardEvent, type ReactNode, useRef, useState } from "react";
+import { type DragEvent, type KeyboardEvent, type ReactNode, useId, useRef, useState } from "react";
 
 import { useControllableState } from "../hooks/use-controllable-state.js";
 import { button, buttonVariants, focusRing, iconButton } from "../lib/classes.js";
@@ -30,6 +30,12 @@ import { downloadText, safeFileName } from "../lib/download.js";
 import {
   BLOCK_PADDING,
   BUILDER_BLOCK_LABELS,
+  builderBlockClass,
+  builderResponsiveCss,
+  createCustomBuilderBlock,
+  type BuilderBlockDefinition,
+  type BuilderBreakpoint,
+  type BuilderDesignToken,
   type BuilderBlock,
   type BuilderBlockPatch,
   type BuilderBlockType,
@@ -62,12 +68,31 @@ import { ActionMenu } from "./action-menu.js";
 import { BlockSettings, DocumentSettings } from "./page-builder-panels.js";
 import { SegmentedControl } from "./segmented-control.js";
 
+export interface PageBuilderChange {
+  label: string;
+  mergeKey?: string;
+}
+
+export interface PageBuilderHistoryControls {
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
+}
+
 export interface PageBuilderProps {
   /** The design; when it changes from outside, it replaces the current one and joins the undo history. */
   value?: BuilderDocument;
   defaultValue?: BuilderDocument;
   /** Called with the new design after every change. */
-  onValueChange?: (doc: BuilderDocument) => void;
+  onValueChange?: (doc: BuilderDocument, change?: PageBuilderChange) => void;
+  historyControls?: PageBuilderHistoryControls;
+  inspectorMode?: "inline" | "external";
+  breakpoint?: BuilderBreakpoint;
+  onBreakpointChange?: (value: BuilderBreakpoint) => void;
+  registry?: readonly BuilderBlockDefinition[];
+  tokens?: readonly BuilderDesignToken[];
+  highlightedBlockIds?: readonly string[];
   /** Select a block from a synchronized layer tree or other inspector. */
   selectedBlockId?: string | null;
   onSelectedBlockChange?: (id: string | null) => void;
@@ -101,7 +126,7 @@ const PALETTE: Array<{ type: BuilderBlockType; icon: ReactNode }> = [
 const MOBILE_WIDTH = 375;
 const HISTORY_LIMIT = 100;
 
-type DragPayload = { kind: "new"; type: BuilderBlockType } | { kind: "move"; id: string };
+type DragPayload = { kind: "new"; type: BuilderBlockType; customType?: string } | { kind: "move"; id: string };
 
 interface History {
   past: BuilderDocument[];
@@ -126,42 +151,49 @@ const isEditable = (target: EventTarget) => target instanceof HTMLElement && (ta
 export function PageBuilder({
   value, defaultValue, onValueChange, selectedBlockId, onSelectedBlockChange,
   mode = "email", onImageUpload, height = "36rem", label = mode === "email" ? "Email builder" : "Page builder",
-  layout = "default", toolbar, className,
+  layout = "default", toolbar, className, historyControls, inspectorMode = "inline", breakpoint, onBreakpointChange, registry, highlightedBlockIds,
 }: PageBuilderProps) {
   const workspace = layout === "workspace";
+  const styleScope = useId().replace(/[^\w-]/g, "_");
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const showSettings = !workspace || settingsOpen;
+  const showSettings = inspectorMode === "inline" && (!workspace || settingsOpen);
   const [history, setHistory] = useState<History>(() => ({ past: [], present: normalizeBuilderDocument(value ?? defaultValue ?? createBuilderDocument(mode), mode), future: [], key: null }));
   const [seenValue, setSeenValue] = useState(value);
   const [selectedId, setSelectedId] = useControllableState<string | null>({
     value: selectedBlockId, defaultValue: null, onChange: onSelectedBlockChange,
   });
-  const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
+  const [device, setDevice] = useControllableState<BuilderBreakpoint>({ value: breakpoint, defaultValue: "desktop", onChange: onBreakpointChange });
   const [view, setView] = useState<"edit" | "preview">("edit");
   const [drop, setDrop] = useState<{ containerId: string; index: number } | null>(null);
   const [status, setStatus] = useState("");
   const drag = useRef<DragPayload | null>(null);
+  const [dragLabel, setDragLabel] = useState("");
   const canvasRef = useRef<HTMLDivElement>(null);
   const importInput = useRef<HTMLInputElement>(null);
 
   if (value !== undefined && value !== seenValue) {
     setSeenValue(value);
-    if (value !== history.present) setHistory((current) => ({ past: [...current.past, current.present].slice(-HISTORY_LIMIT), present: normalizeBuilderDocument(value, mode), future: [], key: null }));
+    if (value !== history.present) setHistory((current) => ({ past: historyControls ? [] : [...current.past, current.present].slice(-HISTORY_LIMIT), present: normalizeBuilderDocument(value, mode), future: [], key: null }));
   }
 
-  const doc = history.present;
+  const doc = historyControls && value ? value : history.present;
   const { settings } = doc;
   const selected = selectedId ? findBuilderBlock(doc, selectedId) : null;
-  const pageWidth = device === "mobile" ? Math.min(MOBILE_WIDTH, settings.width) : settings.width;
+  const pageWidth = device === "mobile" ? Math.min(MOBILE_WIDTH, settings.width) : device === "tablet" ? Math.min(768, settings.width) : settings.width;
   const target = mode === "email" ? "email" : "web";
 
-  const commit = (next: BuilderDocument, key?: string) => {
+  const commit = (next: BuilderDocument, key?: string, label = "Edited page") => {
     if (next === doc) return;
-    setHistory((current) => ({ past: key !== undefined && key === current.key ? current.past : [...current.past, current.present].slice(-HISTORY_LIMIT), present: next, future: [], key: key ?? null }));
-    onValueChange?.(next);
+    if (!historyControls) setHistory((current) => ({ past: key !== undefined && key === current.key ? current.past : [...current.past, current.present].slice(-HISTORY_LIMIT), present: next, future: [], key: key ?? null }));
+    onValueChange?.(next, { label, ...(key ? { mergeKey: key } : {}) });
   };
 
   const travel = (direction: "undo" | "redo") => {
+    if (historyControls) {
+      if (direction === "undo" && historyControls.canUndo) historyControls.onUndo();
+      if (direction === "redo" && historyControls.canRedo) historyControls.onRedo();
+      return;
+    }
     const source = direction === "undo" ? history.past : history.future;
     const next = source.at(-1);
     if (!next) return;
@@ -177,27 +209,28 @@ export function PageBuilder({
 
   const focusBlock = (id: string | null) => {
     requestAnimationFrame(() => {
-      const element = id ? canvasRef.current?.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(id)}"]`) : null;
+      const frames = canvasRef.current?.querySelectorAll<HTMLElement>("[data-block-id]");
+      const element = id ? Array.from(frames ?? []).find((node) => node.dataset.blockId === id) : null;
       element?.focus();
     });
   };
 
   /* ---------------- block actions ---------------- */
 
-  const addBlock = (type: BuilderBlockType) => {
-    const block = createBuilderBlock(type);
+  const addBlock = (type: BuilderBlockType, definition?: BuilderBlockDefinition) => {
+    const block = definition ? createCustomBuilderBlock(definition) : createBuilderBlock(type);
     let containerId = ROOT_CONTAINER;
     let index = doc.blocks.length;
     if (selected) {
       const current = selected.block;
-      if (current.type === "section" && canContain(doc, current.id, type)) {
+      if (current.type === "section" && canContain(doc, current.id, type, definition)) {
         containerId = current.id;
         index = current.blocks.length;
-      } else if (current.type === "columns" && isLeafBlock(block)) {
+      } else if (current.type === "columns" && isLeafBlock(block) && canContain(doc, current.columns[0]!.id, type, definition)) {
         const column = current.columns.find((item) => item.blocks.length === 0) ?? current.columns.at(-1)!;
         containerId = column.id;
         index = column.blocks.length;
-      } else if (canContain(doc, selected.containerId, type)) {
+      } else if (canContain(doc, selected.containerId, type, definition)) {
         containerId = selected.containerId;
         index = selected.index + 1;
       } else {
@@ -205,7 +238,11 @@ export function PageBuilder({
         index = top >= 0 ? top + 1 : doc.blocks.length;
       }
     }
-    commit(insertBuilderBlock(doc, block, containerId, index));
+    if (!canContain(doc, containerId, type, definition)) {
+      setStatus(`${definition?.label ?? BUILDER_BLOCK_LABELS[type]} cannot be placed here. Select a supported container.`);
+      return;
+    }
+    commit(insertBuilderBlock(doc, block, containerId, index, registry), undefined, `Added ${definition?.label ?? BUILDER_BLOCK_LABELS[type]}`);
     setSelectedId(block.id);
     setStatus(`Added ${BUILDER_BLOCK_LABELS[type].toLowerCase()}`);
     focusBlock(block.id);
@@ -215,7 +252,7 @@ export function PageBuilder({
     const location = findBuilderBlock(doc, id);
     if (!location) return;
     const next = removeBuilderBlock(doc, id);
-    commit(next);
+    commit(next, undefined, `Deleted ${builderBlockLabel(location.block)}`);
     const siblings = blocksIn(next, location.containerId);
     const neighbour = siblings[Math.min(location.index, siblings.length - 1)]?.id ?? null;
     setSelectedId(neighbour);
@@ -226,7 +263,7 @@ export function PageBuilder({
   const duplicate = (id: string) => {
     const result = duplicateBuilderBlock(doc, id);
     if (!result.id) return;
-    commit(result.doc);
+    commit(result.doc, undefined, "Duplicated block");
     setSelectedId(result.id);
     setStatus("Duplicated");
     focusBlock(result.id);
@@ -235,7 +272,7 @@ export function PageBuilder({
   const nudge = (id: string, delta: -1 | 1) => {
     const next = nudgeBuilderBlock(doc, id, delta);
     if (next === doc) return;
-    commit(next);
+    commit(next, undefined, "Moved block");
     setStatus(delta < 0 ? "Moved up" : "Moved down");
     focusBlock(id);
   };
@@ -248,13 +285,13 @@ export function PageBuilder({
     const index = parent.columns.findIndex((column) => column.id === location.containerId) + delta;
     const column = parent.columns[index];
     if (!column) return;
-    commit(moveBuilderBlock(doc, id, column.id, column.blocks.length));
+    commit(moveBuilderBlock(doc, id, column.id, column.blocks.length, registry), undefined, "Moved block to column");
     setStatus(`Moved to column ${index + 1}`);
     focusBlock(id);
   };
 
-  const updateBlock = (id: string, patch: BuilderBlockPatch, field?: string) => commit(updateBuilderBlock(doc, id, patch), field ? `${id}:${field}` : undefined);
-  const updateDocument = (patch: BuilderDocumentPatch, field?: string) => commit(patchBuilderDocument(doc, patch), field ? `document:${field}` : undefined);
+  const updateBlock = (id: string, patch: BuilderBlockPatch, field?: string) => commit(updateBuilderBlock(doc, id, patch), field ? `${id}:${field}` : undefined, `Edited ${field ?? "block"}`);
+  const updateDocument = (patch: BuilderDocumentPatch, field?: string) => commit(patchBuilderDocument(doc, patch), field ? `document:${field}` : undefined, "Changed page settings");
 
   /* ---------------- drag and drop ---------------- */
 
@@ -267,11 +304,22 @@ export function PageBuilder({
   const endDrag = () => {
     drag.current = null;
     setDrop(null);
+    setDragLabel("");
   };
 
   const onContainerDragOver = (event: DragEvent<HTMLElement>, containerId: string) => {
     const type = dragType();
-    if (!type || !canContain(doc, containerId, type)) return;
+    const payload = drag.current;
+    const moving = payload?.kind === "move" ? findBuilderBlock(doc, payload.id)?.block : undefined;
+    const customType = payload?.kind === "new" ? payload.customType : moving?.type === "custom" ? moving.name : undefined;
+    const definition = registry?.find((entry) => entry.type === customType);
+    if (!type) return;
+    if (!canContain(doc, containerId, type, definition)) {
+      if (definition?.allowedParents) event.stopPropagation();
+      event.dataTransfer.dropEffect = "none";
+      setDrop(null);
+      return;
+    }
     event.preventDefault();
     event.stopPropagation();
     event.dataTransfer.dropEffect = drag.current?.kind === "new" ? "copy" : "move";
@@ -290,12 +338,13 @@ export function PageBuilder({
     event.preventDefault();
     event.stopPropagation();
     if (payload.kind === "new") {
-      const block = createBuilderBlock(payload.type);
-      commit(insertBuilderBlock(doc, block, containerId, drop.index));
+      const definition = registry?.find((entry) => entry.type === payload.customType);
+      const block = definition ? createCustomBuilderBlock(definition) : createBuilderBlock(payload.type);
+      commit(insertBuilderBlock(doc, block, containerId, drop.index, registry), undefined, `Added ${definition?.label ?? BUILDER_BLOCK_LABELS[payload.type]}`);
       setSelectedId(block.id);
       setStatus(`Added ${BUILDER_BLOCK_LABELS[payload.type].toLowerCase()}`);
     } else {
-      commit(moveBuilderBlock(doc, payload.id, containerId, drop.index));
+      commit(moveBuilderBlock(doc, payload.id, containerId, drop.index, registry), undefined, "Moved block");
       setSelectedId(payload.id);
       setStatus("Moved");
     }
@@ -348,7 +397,7 @@ export function PageBuilder({
   const fileName = safeFileName(doc.title, mode);
   const copyHtml = () =>
     void navigator.clipboard
-      ?.writeText(builderToHtml(doc, { target }))
+      ?.writeText(builderToHtml(doc, { target, ...(registry ? { registry } : {}) }))
       .then(() => setStatus("Copied HTML"))
       .catch(() => setStatus("Couldn't copy to the clipboard"));
   const openDesign = async (file: File) => {
@@ -364,10 +413,10 @@ export function PageBuilder({
 
   /* ---------------- canvas rendering ---------------- */
 
-  const dropLine = (containerId: string, index: number) => (drop?.containerId === containerId && drop.index === index ? <div key={`drop-${index}`} aria-hidden="true" className="pointer-events-none h-0.5 rounded-full bg-primary" /> : null);
+  const dropLine = (containerId: string, index: number) => (drop?.containerId === containerId && drop.index === index ? <div key={`drop-${index}`} aria-hidden="true" className="pointer-events-none relative z-20 h-0.5 rounded-full bg-primary"><span className="absolute right-0 bottom-0 rounded bg-primary px-1 text-xs text-primary-foreground">Insert here</span></div> : null);
 
   const renderContainer = (containerId: string, blocks: BuilderBlock[], available: number, inset: number, empty: string): ReactNode => (
-    <div data-container-id={containerId} onDragOver={(event) => onContainerDragOver(event, containerId)} onDrop={(event) => onContainerDrop(event, containerId)} className="flex min-h-10 flex-col">
+    <div data-container-id={containerId} data-drop-target={drop?.containerId === containerId || undefined} onDragOver={(event) => onContainerDragOver(event, containerId)} onDrop={(event) => onContainerDrop(event, containerId)} className={cn("flex min-h-10 flex-col", drop?.containerId === containerId && "outline-2 outline-dashed outline-primary bg-primary/5")}>
       {blocks.flatMap((block, index) => [dropLine(containerId, index), renderBlock(block, available, inset)])}
       {dropLine(containerId, blocks.length)}
       {blocks.length === 0 && <div className="m-1 flex min-h-14 items-center justify-center rounded-md border-2 border-dashed border-border px-3 text-center text-sm text-muted-foreground">{empty}</div>}
@@ -392,6 +441,11 @@ export function PageBuilder({
           ))}
         </div>
       );
+    } else if (block.type === "custom") {
+      const definition = registry?.find((entry) => entry.type === block.name);
+      content = <div inert style={{ padding: `${BLOCK_PADDING}px ${inset}px` }}>
+        {definition ? definition.render(block) : <p className="rounded border border-dashed border-border p-4 text-sm">Unavailable block: {block.name}. Its data is preserved.</p>}
+      </div>;
     } else {
       content = <div inert style={{ padding: `${BLOCK_PADDING}px ${inset}px` }} dangerouslySetInnerHTML={{ __html: cachedLeafHtml(block, { target: "web", settings, available: available - inset * 2, editing: true }) }} />;
     }
@@ -399,6 +453,8 @@ export function PageBuilder({
       <div
         key={block.id}
         data-block-id={block.id}
+        data-block-label={`${builderBlockLabel(block)}${highlightedBlockIds?.includes(block.id) ? " · Proposed change" : ""}`}
+        data-proposed-change={highlightedBlockIds?.includes(block.id) || undefined}
         role="group"
         aria-label={builderBlockLabel(block)}
         aria-current={isSelected || undefined}
@@ -407,6 +463,7 @@ export function PageBuilder({
         onDragStart={(event) => {
           event.stopPropagation();
           drag.current = { kind: "move", id: block.id };
+          setDragLabel(builderBlockLabel(block));
           event.dataTransfer.effectAllowed = "move";
           event.dataTransfer.setData("text/plain", builderBlockLabel(block));
         }}
@@ -419,10 +476,10 @@ export function PageBuilder({
           setSelectedId(block.id);
         }}
         onKeyDown={(event) => onBlockKeyDown(event, block)}
-        className={cn("relative cursor-default outline-none", isSelected ? "z-10 outline-2 -outline-offset-2 outline-primary" : "hover:outline-1 hover:-outline-offset-1 hover:outline-primary/60", "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring")}
+        className={cn("pb-builder-frame group/builder-block relative cursor-default outline-none before:pointer-events-none before:absolute before:top-0 before:left-0 before:z-20 before:hidden before:max-w-[60%] before:truncate before:rounded-br before:bg-primary before:px-1.5 before:py-0.5 before:text-xs before:text-primary-foreground before:content-[attr(data-block-label)] hover:before:block focus-visible:before:block", builderBlockClass(block), highlightedBlockIds?.includes(block.id) && "outline-2 -outline-offset-2 outline-warning", isSelected ? "z-10 before:block outline-2 -outline-offset-2 outline-primary" : "hover:outline-1 hover:-outline-offset-1 hover:outline-primary/60", "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring")}
       >
         {isSelected && (
-          <div className="absolute top-1 right-1 z-20 flex rounded-md border border-border bg-background shadow-sm">
+          <div data-builder-actions className="absolute top-1 right-1 z-20 flex rounded-md border border-border bg-background shadow-sm">
             <button type="button" aria-label="Move up" title="Move up (Alt+Up)" onClick={() => nudge(block.id, -1)} className={cn(iconButton, "size-7", focusRing)}>
               <ArrowUpIcon aria-hidden="true" />
             </button>
@@ -447,10 +504,10 @@ export function PageBuilder({
   return (
     <section aria-label={label} data-slot="page-builder" onKeyDown={onRootKeyDown} className={cn("@container flex flex-col overflow-hidden bg-background text-foreground", !workspace && "rounded-lg border border-border", className)}>
       <div role="group" aria-label={`${label} actions`} className="flex flex-wrap items-center gap-2 border-b border-border px-2 py-1.5">
-        <button type="button" aria-label="Undo" title="Undo (Ctrl+Z)" disabled={history.past.length === 0} onClick={() => travel("undo")} className={cn(iconButton, focusRing)}>
+        <button type="button" aria-label="Undo" title="Undo (Ctrl+Z)" disabled={historyControls ? !historyControls.canUndo : history.past.length === 0} onClick={() => travel("undo")} className={cn(iconButton, focusRing)}>
           <Undo2Icon aria-hidden="true" />
         </button>
-        <button type="button" aria-label="Redo" title="Redo (Ctrl+Shift+Z)" disabled={history.future.length === 0} onClick={() => travel("redo")} className={cn(iconButton, focusRing)}>
+        <button type="button" aria-label="Redo" title="Redo (Ctrl+Shift+Z)" disabled={historyControls ? !historyControls.canRedo : history.future.length === 0} onClick={() => travel("redo")} className={cn(iconButton, focusRing)}>
           <Redo2Icon aria-hidden="true" />
         </button>
         <SegmentedControl
@@ -460,6 +517,7 @@ export function PageBuilder({
           onValueChange={setDevice}
           options={[
             { value: "desktop", label: "Desktop" },
+            ...(mode === "page" ? [{ value: "tablet" as const, label: "Tablet" }] : []),
             { value: "mobile", label: "Mobile" },
           ]}
         />
@@ -477,7 +535,7 @@ export function PageBuilder({
           {status}
         </span>
         {toolbar}
-        {workspace && <button type="button" aria-pressed={settingsOpen} onClick={() => setSettingsOpen(!settingsOpen)}
+        {workspace && inspectorMode === "inline" && <button type="button" aria-pressed={settingsOpen} onClick={() => setSettingsOpen(!settingsOpen)}
           className={cn(button, buttonVariants.ghost, "aria-pressed:bg-accent", focusRing)}>
           <SlidersHorizontalIcon aria-hidden="true" />
           Properties
@@ -503,7 +561,7 @@ export function PageBuilder({
           }
           items={[
             { id: "copy", label: mode === "email" ? "Copy email HTML" : "Copy page HTML", onSelect: copyHtml },
-            { id: "html", label: "Download HTML", onSelect: () => downloadText(`${fileName}.html`, builderToHtml(doc, { target }), "text/html;charset=utf-8") },
+            { id: "html", label: "Download HTML", onSelect: () => downloadText(`${fileName}.html`, builderToHtml(doc, { target, ...(registry ? { registry } : {}) }), "text/html;charset=utf-8") },
             { type: "separator", id: "s" },
             { id: "json", label: "Download design (.json)", onSelect: () => downloadText(`${fileName}.json`, `${JSON.stringify(doc, null, 2)}\n`, "application/json") },
             { id: "open", label: "Open design (.json)…", onSelect: () => importInput.current?.click() },
@@ -522,6 +580,7 @@ export function PageBuilder({
               draggable
               onDragStart={(event) => {
                 drag.current = { kind: "new", type: item.type };
+                setDragLabel(BUILDER_BLOCK_LABELS[item.type]);
                 event.dataTransfer.effectAllowed = "copy";
                 event.dataTransfer.setData("text/plain", BUILDER_BLOCK_LABELS[item.type]);
               }}
@@ -534,6 +593,17 @@ export function PageBuilder({
               {BUILDER_BLOCK_LABELS[item.type]}
             </button>
           ))}
+          {registry?.map((definition) => <button key={definition.type} type="button" draggable
+            onDragStart={(event) => {
+              drag.current = { kind: "new", type: "custom", customType: definition.type };
+              setDragLabel(definition.label);
+              event.dataTransfer.effectAllowed = "copy";
+              event.dataTransfer.setData("text/plain", definition.label);
+            }} onDragEnd={endDrag} onClick={() => addBlock("custom", definition)}
+            className={cn(button, buttonVariants.ghost, "h-8 cursor-grab px-2 text-foreground active:cursor-grabbing", focusRing)}>
+            <PanelTopIcon aria-hidden="true" /><span className="sr-only">Add </span>{definition.label}
+          </button>)}
+          {dragLabel && <span role="status" className="text-xs text-muted-foreground">Dragging {dragLabel}. Drop on a highlighted container.</span>}
         </div>
       )}
       <div className={cn("grid min-h-0 flex-1 grid-cols-1", showSettings && "@3xl:grid-cols-[minmax(0,1fr)_20rem]")}>
@@ -549,13 +619,14 @@ export function PageBuilder({
             className={cn("min-w-0 overflow-auto p-4 @md:p-6", workspace && "p-3 @3xl:px-10 [background-image:radial-gradient(#64748b40_1px,transparent_1px)] [background-size:16px_16px]")}
             style={{ height, background: settings.background }}
           >
-            <div data-theme="light" className={cn("@container mx-auto max-w-full [color-scheme:light]", workspace && "overflow-hidden rounded-sm shadow-[0_2px_12px_#0f172a26]")} style={{ width: pageWidth, background: settings.contentBackground, color: settings.textColor, fontFamily: font, padding: `${BLOCK_PADDING}px 0` }}>
+            <div data-theme="light" data-builder-style-scope={styleScope} className={cn("@container mx-auto max-w-full [color-scheme:light]", workspace && "overflow-hidden rounded-sm shadow-[0_2px_12px_#0f172a26]")} style={{ width: pageWidth, background: settings.contentBackground, color: settings.textColor, fontFamily: font, padding: `${BLOCK_PADDING}px 0` }}>
+              <style>{builderResponsiveCss(doc, device).replaceAll(".pb-style-", `[data-builder-style-scope="${styleScope}"] .pb-style-`)}</style>
               {renderContainer(ROOT_CONTAINER, doc.blocks, pageWidth, settings.padding, "Add blocks from the palette, or drag them here")}
             </div>
           </div>
         ) : (
           <div className="min-w-0 overflow-auto p-4" style={{ height, background: settings.background }}>
-            <iframe title={`${label} preview`} sandbox="" srcDoc={builderToHtml(doc, { target })} className="mx-auto block h-full max-w-full border-0 bg-white" style={{ width: pageWidth + (target === "email" ? 24 : 0) }} />
+            <iframe title={`${label} preview`} sandbox="" srcDoc={builderToHtml(doc, { target, ...(registry ? { registry } : {}) })} className="mx-auto block h-full max-w-full border-0 bg-white" style={{ width: pageWidth + (target === "email" ? 24 : 0) }} />
           </div>
         )}
         {showSettings && <aside aria-label={selected ? "Block settings" : "Design settings"} className="flex min-w-0 flex-col gap-3 overflow-y-auto border-t border-border p-3 @3xl:border-t-0 @3xl:border-l" style={{ maxHeight: height }}>
@@ -568,7 +639,7 @@ export function PageBuilder({
             )}
           </div>
           {selected ? (
-            <BlockSettings key={selected.block.id} block={selected.block} settings={settings} mode={mode} onChange={(patch, field) => updateBlock(selected.block.id, patch, field)} onImageUpload={onImageUpload} onStatus={setStatus} />
+            <BlockSettings key={selected.block.id} block={selected.block} settings={settings} mode={mode} onChange={(patch, field) => updateBlock(selected.block.id, patch, field)} onImageUpload={onImageUpload} onStatus={setStatus} registry={registry} />
           ) : (
             <DocumentSettings doc={doc} mode={mode} onChange={updateDocument} />
           )}

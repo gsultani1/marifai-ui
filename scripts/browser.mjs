@@ -9,6 +9,7 @@ import { chromium } from "playwright";
 import { build, preview } from "vite";
 
 import { checkEditor } from "./browser-editor.mjs";
+import { checkVibeEditor } from "./browser-vibe-editor.mjs";
 import { checkGeneral } from "./browser-general.mjs";
 
 const output = resolve(process.env.MARIFAI_BROWSER_ARTIFACTS ?? ".browser-artifacts");
@@ -1472,6 +1473,7 @@ async function checkGallery(page, url) {
 
   await checkPublishing(page);
   await checkEditor(page, pass);
+  await checkVibeEditor(page, pass);
 
   await expectNoViolations(page, "gallery-light");
   await page.getByRole("button", { name: "Use dark theme" }).click();
