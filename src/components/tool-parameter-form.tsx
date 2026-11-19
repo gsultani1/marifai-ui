@@ -56,6 +56,7 @@ export function ToolParameterForm({ parameters, initialValues, onSubmit, title =
   }
   return <ControlPanel slot="tool-parameter-form" title={title} className={className}>
     <AsyncForm label={title} submitLabel={submitLabel} onSubmit={submit}>
+      {!parameters.length && <p className="text-sm text-muted-foreground">No parameters to fill in.</p>}
       {parameters.map((parameter) => {
         const value = draft.get(parameter.name) ?? "";
         const label = parameter.label + (parameter.required ? " (required)" : "");

@@ -22,10 +22,13 @@ export function ToolRegistryPicker({ tools, selectedIds, onSelectionChange, clas
   return <ControlPanel slot="tool-registry-picker" title="Tool registry" className={className}>
     <SearchField label="Search tools" value={query} onChange={setQuery} />
     <ChoiceField label="Capability" value={active} placeholder="All" options={capabilities.map((value) => ({ value, label: value }))} onChange={setCapability} />
-    <ItemList items={visible} empty="No matching tools." render={(item) => <ItemHeading title={item.name}
-      detail={[item.description, item.capabilities.join(", "), item.unavailableReason].filter(Boolean).join(" · ")}>
-      <label className="text-sm"><input type="checkbox" aria-label={"Select " + item.name} checked={selectedIds.includes(item.id)}
-        disabled={Boolean(item.unavailableReason)} onChange={(event) => onSelectionChange(item.id, event.currentTarget.checked)} /> Select</label>
-    </ItemHeading>} />
+    <ItemList items={visible} empty={tools.length ? "No matching tools." : "No tools registered."} render={(item) => {
+      const selected = selectedIds.includes(item.id);
+      return <ItemHeading title={item.name}
+        detail={[item.description, item.capabilities.join(", "), item.unavailableReason].filter(Boolean).join(" · ")}>
+        <label className="text-sm"><input type="checkbox" aria-label={"Select " + item.name} checked={selected}
+          disabled={Boolean(item.unavailableReason) && !selected} onChange={(event) => onSelectionChange(item.id, event.currentTarget.checked)} /> Select</label>
+      </ItemHeading>;
+    }} />
   </ControlPanel>;
 }

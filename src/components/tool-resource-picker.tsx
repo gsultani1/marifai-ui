@@ -15,9 +15,12 @@ export interface ToolResourcePickerProps {
 export function ToolResourcePicker({ resources, selectedId, onSelect, className }: ToolResourcePickerProps) {
   return <ControlPanel slot="tool-resource-picker" title="Tool resources" className={className}>
     <FilteredList items={resources} searchLabel="Search resources" searchText={(item) => [item.title, item.address, item.description]}
-      empty="No matching resources." render={(item) => <ItemHeading title={item.title} detail={item.address}>
-        <ControlAction label={selectedId === item.id ? "Selected" : "Select"} item={item.title}
-          disabled={selectedId === item.id} onClick={() => onSelect(item.id)} />
-      </ItemHeading>} />
+      empty={resources.length ? "No matching resources." : "No resources available."} render={(item) => <>
+        <ItemHeading title={item.title} detail={item.address}>
+          <ControlAction label={selectedId === item.id ? "Selected" : "Select"} item={item.title}
+            disabled={selectedId === item.id} onClick={() => onSelect(item.id)} />
+        </ItemHeading>
+        {item.description && <p className="text-sm break-words">{item.description}</p>}
+      </>} />
   </ControlPanel>;
 }

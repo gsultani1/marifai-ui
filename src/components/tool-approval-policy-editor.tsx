@@ -16,16 +16,24 @@ export interface ToolApprovalPolicyEditorProps {
   className?: string;
 }
 
+const POLICY_LABEL: Record<ToolPolicyValue, string> = { ask: "Ask", allow: "Allow", deny: "Deny" };
+
 export function ToolApprovalPolicyEditor({ rules, onChange, pendingIds = [], className }: ToolApprovalPolicyEditorProps) {
   return <ControlPanel slot="tool-approval-policy-editor" title="Tool approval policy" className={className}>
     <ItemList items={rules} empty="No tool rules." render={(rule) => {
       const available = rule.available ?? ["ask","allow","deny"];
       const values = rule.value && !available.includes(rule.value) ? [...available,rule.value] : available;
+      const pending = pendingIds.includes(rule.id);
       return <>
-        <ItemHeading title={rule.tool} detail={["Effective: " + rule.effective,rule.inheritedFrom,rule.unavailableReason].filter(Boolean).join(" · ")} />
+        <ItemHeading title={rule.tool} detail={[
+          "Effective: " + POLICY_LABEL[rule.effective],
+          rule.inheritedFrom && "Inherited from " + rule.inheritedFrom,
+          rule.unavailableReason,
+          pending && "Saving",
+        ].filter(Boolean).join(" · ")} />
         {onChange && <ChoiceField label={"Rule for " + rule.tool} value={rule.value ?? ""} placeholder="Inherit"
-          options={values.map((value) => ({ value,label:value[0]!.toUpperCase()+value.slice(1),disabled:!available.includes(value) }))}
-          disabled={Boolean(rule.unavailableReason) || pendingIds.includes(rule.id)} onChange={(value) => onChange(rule.id,value || null)} />}
+          options={values.map((value) => ({ value,label:POLICY_LABEL[value],disabled:!available.includes(value) }))}
+          disabled={Boolean(rule.unavailableReason) || pending} onChange={(value) => onChange(rule.id,value || null)} />}
       </>;
     }} />
   </ControlPanel>;

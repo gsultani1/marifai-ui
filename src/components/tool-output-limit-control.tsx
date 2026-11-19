@@ -19,8 +19,8 @@ export function ToolOutputLimitControl({ initialValue, policy, onSubmit, classNa
   return <ControlPanel slot="tool-output-limit-control" title="Tool output limits" className={className}>
     <p className="text-sm break-words">{policy}</p>
     <AsyncForm label="Tool output limits" submitLabel="Save limits" onSubmit={() => {
-      const byteLimit = optionalNumber(bytes,"Bytes",1,true);
-      const itemLimit = optionalNumber(items,"Items",1,true);
+      const byteLimit = optionalNumber(bytes,"Maximum bytes",1,true);
+      const itemLimit = optionalNumber(items,"Maximum items",1,true);
       return onSubmit({...(byteLimit === undefined ? {} : {bytes:byteLimit}),...(itemLimit === undefined ? {} : {items:itemLimit})});
     }}>
       <Field label="Maximum bytes"><input inputMode="numeric" className={fieldClass} value={bytes} onChange={(event) => setBytes(event.currentTarget.value)} /></Field>

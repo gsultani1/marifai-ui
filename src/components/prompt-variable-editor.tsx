@@ -19,12 +19,17 @@ export function PromptVariableEditor({ prompt, initialValues, onSubmit, classNam
   const preview = fillPrompt(prompt,values);
   return <ControlPanel slot="prompt-variable-editor" title="Prompt variables" className={className}>
     <AsyncForm label="Prompt variables" submitLabel="Use filled prompt" onSubmit={() => {
-      if (names.some((name) => !draft.get(name)?.trim())) throw new Error("Fill all prompt variables.");
+      const missing = names.filter((name) => !draft.get(name)?.trim());
+      if (missing.length) throw new Error("Fill in every prompt variable: " + missing.join(", ") + ".");
       return onSubmit(values,preview);
     }}>
-      {names.map((name) => <Field key={name} label={name}><input className={fieldClass} value={draft.get(name) ?? ""}
-        onChange={(event) => { const value = event.currentTarget.value; setDraft((old) => new Map(old).set(name,value)); }} /></Field>)}
-      <p aria-label="Filled prompt preview" className={contentBlock}>{preview}</p>
+      {names.length ? names.map((name) => <Field key={name} label={name}><input className={fieldClass} value={draft.get(name) ?? ""} aria-required="true"
+        onChange={(event) => { const value = event.currentTarget.value; setDraft((old) => new Map(old).set(name,value)); }} /></Field>)
+        : <p className="text-sm text-muted-foreground">This prompt has no variables.</p>}
+      <div className="space-y-1">
+        <h4 className="text-sm font-medium">Filled prompt preview</h4>
+        <p className={contentBlock}>{preview}</p>
+      </div>
     </AsyncForm>
   </ControlPanel>;
 }
