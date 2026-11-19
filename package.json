@@ -1,6 +1,6 @@
 {
   "name": "@sultanico/ai-ui",
-  "version": "0.4.0-dev.4",
+  "version": "0.4.0-dev.5",
   "description": "Source-owned React 19 components for AI chat and agent interfaces, built on Tailwind CSS v4 and Base UI",
   "type": "module",
   "license": "MIT",

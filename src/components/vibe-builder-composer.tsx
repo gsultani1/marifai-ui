@@ -1,8 +1,10 @@
-// packages/ai-ui/src/components/vibe-builder-composer.tsx
+// src/components/vibe-builder-composer.tsx
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ArrowUpIcon, FocusIcon, LayoutTemplateIcon } from "lucide-react";
+
+import { useControllableState } from "../hooks/use-controllable-state.js";
 
 import { cn } from "../lib/cn.js";
 import { Button } from "./button.js";
@@ -24,6 +26,8 @@ export interface VibeBuilderSelectedBlock {
 
 export interface VibeBuilderComposerProps {
   revision: string;
+  draft?: string;
+  onDraftChange?: ((draft: string) => void) | undefined;
   selectedBlock?: VibeBuilderSelectedBlock | null | undefined;
   onSubmit: (request: VibeBuilderPromptRequest) => void | Promise<void>;
   generating?: boolean | undefined;
@@ -34,12 +38,14 @@ export interface VibeBuilderComposerProps {
 }
 
 export function VibeBuilderComposer({
-  revision, selectedBlock, onSubmit, generating = false, onStop, suggestions, blockSuggestions, className,
+  revision, draft, onDraftChange, selectedBlock, onSubmit, generating = false, onStop, suggestions, blockSuggestions, className,
 }: VibeBuilderComposerProps) {
   const scopeId = useId();
   const submitting = useRef(false);
   const input = useRef<HTMLTextAreaElement>(null);
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useControllableState({ value: draft, defaultValue: "", onChange: onDraftChange });
+  const latestPrompt = useRef(prompt);
+  useEffect(() => { latestPrompt.current = prompt; }, [prompt]);
   const [pageScopeFor, setPageScopeFor] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -54,7 +60,7 @@ export function VibeBuilderComposer({
     setError("");
     try {
       await onSubmit({ prompt: text, scope: block ? { kind: "block", blockId: block.id } : { kind: "page" }, baseRevision: revision });
-      setPrompt("");
+      if (latestPrompt.current === prompt) setPrompt("");
     } catch (reason) {
       setError(reason instanceof Error && reason.message ? reason.message : "Couldn’t submit the request. Try again.");
     } finally {
@@ -100,7 +106,7 @@ export function VibeBuilderComposer({
           className="rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0"
           readOnly={pending} autosize minRows={2} maxRows={6} placeholder="Ask for a change…" />
         <div className="flex flex-wrap items-center justify-end gap-2 px-0.5 pb-0.5">
-          {generating && onStop && <Button type="button" size="sm" variant="outline" onClick={onStop}>Stop generation</Button>}
+          {(generating || pending) && onStop && <Button type="button" size="sm" variant="outline" onClick={onStop}>Stop generation</Button>}
           <Button type="submit" size="sm" loading={pending} disabled={generating || !prompt.trim()}>
             Send request <ArrowUpIcon aria-hidden="true" />
           </Button>

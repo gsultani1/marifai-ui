@@ -25,8 +25,7 @@ it("shares block selection and revision across layers, canvas edits and the assi
   }
   render(<Project />);
   fireEvent.click(screen.getByRole("treeitem", { name: /Storefront/ }));
-  fireEvent.click(screen.getByRole("button", { name: "Properties" }));
-  expect(screen.getByRole("complementary", { name: "Block settings" })).toBeTruthy();
+  expect(screen.getByRole("complementary", { name: "Block properties" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Add Image" }));
 
   const imageLayer = screen.getByRole("treeitem", { name: /Image/ });

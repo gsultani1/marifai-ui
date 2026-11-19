@@ -1,10 +1,10 @@
-// packages/ai-ui/src/components/vibe-builder-preview.tsx
+// src/components/vibe-builder-preview.tsx
 "use client";
 
 import { useMemo } from "react";
 
 import { cn } from "../lib/cn.js";
-import { builderToHtml, type BuilderDocument } from "../lib/page-builder.js";
+import { builderToHtml, type BuilderDocument, type BuilderBlockDefinition } from "../lib/page-builder.js";
 import { InteractivePreview } from "./interactive-preview.js";
 
 export type VibeBuilderPreviewSource =
@@ -20,12 +20,13 @@ export interface VibeBuilderPreviewProps {
   /** Origins from which the sandbox may load resources. */
   allowedOrigins?: readonly string[] | undefined;
   showToolbar?: boolean;
+  registry?: readonly BuilderBlockDefinition[] | undefined;
   className?: string;
 }
 
-export function VibeBuilderPreview({ source, title = "Project preview", allowScripts = false, onRuntimeError, allowedOrigins, showToolbar = true, className }: VibeBuilderPreviewProps) {
+export function VibeBuilderPreview({ source, title = "Project preview", allowScripts = false, onRuntimeError, allowedOrigins, showToolbar = true, registry, className }: VibeBuilderPreviewProps) {
   const document = source.kind === "design" ? source.document : undefined;
-  const designHtml = useMemo(() => document && builderToHtml(document, { target: "web" }), [document]);
+  const designHtml = useMemo(() => document && builderToHtml(document, { target: "web", registry }), [document, registry]);
   const html = source.kind === "generated" ? source.html : designHtml;
   const script = source.kind === "generated" && allowScripts ? source.script : undefined;
   return (

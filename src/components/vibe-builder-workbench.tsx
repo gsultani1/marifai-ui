@@ -1,4 +1,4 @@
-// packages/ai-ui/src/components/vibe-builder-workbench.tsx
+// src/components/vibe-builder-workbench.tsx
 "use client";
 
 import type { ReactNode } from "react";
@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { useControllableState } from "../hooks/use-controllable-state.js";
 import { cn } from "../lib/cn.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs.js";
+import { ResizablePanels, type ResizablePanel } from "./resizable-panels.js";
 
 export type VibeBuilderView = "design" | "code" | "preview" | "review";
 
@@ -13,6 +14,9 @@ export interface VibeBuilderWorkbenchProps {
   title: string;
   assistant: ReactNode;
   design: ReactNode;
+  inspector?: ReactNode;
+  panelSizes?: number[];
+  onPanelSizesChange?: (sizes: number[]) => void;
   code?: ReactNode;
   preview?: ReactNode;
   review?: ReactNode;
@@ -24,7 +28,7 @@ export interface VibeBuilderWorkbenchProps {
 }
 
 export function VibeBuilderWorkbench({
-  title, assistant, design, code, preview, review, toolbar, view, defaultView = "design", onViewChange, className,
+  title, assistant, design, inspector, panelSizes, onPanelSizesChange, code, preview, review, toolbar, view, defaultView = "design", onViewChange, className,
 }: VibeBuilderWorkbenchProps) {
   const [active, select] = useControllableState({ value: view, defaultValue: defaultView, onChange: onViewChange });
   const panels = ([
@@ -54,19 +58,26 @@ export function VibeBuilderWorkbench({
           </TabsList>
           {toolbar && <div className="min-w-0 @min-[54rem]:justify-self-end">{toolbar}</div>}
         </header>
-        <div className="grid min-w-0 @min-[54rem]:grid-cols-[minmax(16rem,18.5rem)_minmax(0,1fr)]">
-          <aside aria-label="Build assistant" className="min-w-0 border-b border-border bg-muted/25 @min-[54rem]:border-r @min-[54rem]:border-b-0">
-            {assistant}
-          </aside>
-          <div className="@container min-w-0">
-            {panels.map(({ id, content }) => (
-              <TabsContent key={id} value={id} keepMounted={id === "design" || id === "code" ? "visited" : false}
-                className={id === "design" ? "m-0 min-w-0" : "m-0 min-w-0 p-3 sm:p-4"}>
-                {content}
-              </TabsContent>
-            ))}
-          </div>
-        </div>
+        <ResizablePanels
+          panels={[
+            { id: "assistant", label: "assistant", defaultSize: 25, minSize: 16, maxSize: 45,
+              children: <aside aria-label="Build assistant" className="h-full min-w-0 bg-muted/25">{assistant}</aside> },
+            { id: "canvas", label: "canvas", defaultSize: inspector ? 50 : 75, minSize: 30,
+              children: <div className="@container min-w-0">
+                {panels.map(({ id, content }) => (
+                  <TabsContent key={id} value={id} keepMounted={id === "design" || id === "code" ? "visited" : false}
+                    className={id === "design" ? "m-0 min-w-0" : "m-0 min-w-0 p-3 sm:p-4"}>
+                    {content}
+                  </TabsContent>
+                ))}
+              </div> },
+            ...(inspector ? [{ id: "inspector", label: "properties", defaultSize: 25, minSize: 18, maxSize: 40,
+              children: inspector } satisfies ResizablePanel] : []),
+          ]}
+          {...(panelSizes?.length === (inspector ? 3 : 2) ? { sizes: panelSizes } : {})}
+          {...(onPanelSizesChange ? { onSizesChange: onPanelSizesChange } : {})}
+          className="flex-col [&>[data-panel]]:basis-auto! [&>[role=separator]]:hidden @min-[68rem]:flex-row @min-[68rem]:[&>[data-panel]]:basis-0! @min-[68rem]:[&>[role=separator]]:flex"
+        />
       </Tabs>
     </section>
   );

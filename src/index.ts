@@ -1,4 +1,4 @@
-// packages/ai-ui/src/index.ts
+// src/index.ts
 export { type FollowUpPerson, type AssistantFollowUpDraft, type AssistantFollowUpComposerProps, AssistantFollowUpComposer } from "./components/assistant-follow-up-composer.js";
 export { type ToolBatchDecision, type ToolBatchCall, type ReviewedToolBatchCall, type ToolCallBatchReviewProps, ToolCallBatchReview } from "./components/tool-call-batch-review.js";
 export { type InboxTask, type TaskInboxProps, TaskInbox } from "./components/task-inbox.js";
@@ -2005,3 +2005,8 @@ export {
   UploadQueueStore,
   type UploadStatus,
 } from "./lib/upload-queue.js";
+
+export { PageBuilderInspector, type PageBuilderInspectorProps } from "./components/page-builder-inspector.js";
+export { type PageBuilderChange, type PageBuilderHistoryControls } from "./components/page-builder.js";
+export { type BuilderBreakpoint, type BuilderBlockStyle, type BuilderDesignToken, type BuilderBlockDefinition, type BuilderValue, type CustomBlock, createCustomBuilderBlock, resolveBuilderBlockStyle, builderResponsiveCss, builderBlockClass } from "./lib/page-builder.js";
+export { type VibeBuilderSession, type VibeBuilderHistoryEntry, type VibeBuilderHistoryState, type VibeBuilderSaveState, restoreVibeBuilderSession, describeVibeBuilderChanges, changedVibeBuilderBlockIds } from "./lib/vibe-builder-session.js";

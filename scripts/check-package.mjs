@@ -42,6 +42,34 @@ import { TaskQuickAdd as DirectTaskQuickAdd } from "@sultanico/ai-ui/experimenta
 // @ts-expect-error experimental components are not exported from the main entry point
 import type { TaskQuickAddProps } from "@sultanico/ai-ui";
 
+import {
+  VibeCodingEditor, PageBuilderInspector, createBuilderDocument, createCustomBuilderBlock,
+  restoreVibeBuilderSession, type BuilderBlockDefinition, type VibeBuilderSession,
+} from "@sultanico/ai-ui";
+import { VibeCodingEditor as DirectVibeCodingEditor, type VibeCodingEditorProps } from "@sultanico/ai-ui/components/vibe-coding-editor";
+import { PageBuilderInspector as DirectPageBuilderInspector, type PageBuilderInspectorProps } from "@sultanico/ai-ui/components/page-builder-inspector";
+
+const appBlock: BuilderBlockDefinition = {
+  type: "card", label: "App card", create: () => ({ title: "Card" }),
+  render: block => <article>{String(block.props.title)}</article>,
+  renderToHtml: () => "<article>Card</article>",
+  allowedParents: ["root", "section", "column"],
+};
+const editorDocument = createBuilderDocument("page", [createCustomBuilderBlock(appBlock)]);
+const editorProps: VibeCodingEditorProps = {
+  projectId: "consumer", title: "Installed editor", document: editorDocument, revision: "1",
+  onDocumentChange: () => undefined, onRequest: async () => undefined,
+  onApplyProposal: async () => undefined, onSaveSession: async (session: VibeBuilderSession) => { void session.history; },
+  registry: [appBlock], tokens: [{ id: "brand", label: "Brand", value: "#173e33" }],
+};
+const propertyProps: PageBuilderInspectorProps = {
+  document: editorDocument, selectedBlockId: null, onDocumentChange: () => undefined, breakpoint: "mobile",
+};
+const installedEditor = <><VibeCodingEditor {...editorProps} /><DirectVibeCodingEditor {...editorProps} />
+  <PageBuilderInspector {...propertyProps} /><DirectPageBuilderInspector {...propertyProps} /></>;
+void restoreVibeBuilderSession(null, "consumer");
+void installedEditor;
+
 const noop = () => undefined;
 const sandbox: PreviewSandboxToken[] = ["allow-forms"];
 void useStickToBottom;

@@ -767,6 +767,55 @@ npm run test:browser                          # needs a Playwright Chromium
 
 `check:css` compiles the preset with the Tailwind v4 CLI, with automatic source detection off, to prove the preset alone finds the component classes. `check:package` installs the packed tarball into a fresh project, typechecks the public API with negative type tests, renders every component on the server, compiles a copied `src/` and builds the installed preset. `test:browser` builds the playground and drives the chat page, the workbench and every gallery section in Chromium with the keyboard and pointer (streaming follow and release, clipboard, lazy editors, full-screen popups, sandbox isolation, the compiled React and project previews, terminals and notebooks, the element inspector and region capture, model and usage settings, knowledge and evidence, the agent graph and notifications, nested menus, dialogs, comboboxes, the virtual list, the carousel and the site header's mobile menu among them), with axe WCAG 2.1 AA scans in light, dark and mobile layouts; screenshots and reports land in `.browser-artifacts/`. Region capture is exercised with Chromium's `--auto-accept-this-tab-capture` switch.
 
+## Vibe coding editor
+
+`VibeCodingEditor` combines a controlled visual document, host-supplied chat, inline proposal review, source and preview views, resizable panels, a layer tree, and a persistent properties inspector. Register application blocks through `BuilderBlockDefinition` to supply a React renderer, property editor, HTML export, creation defaults, allowed parent containers, and prompt suggestions.
+
+The host owns `document` and a monotonically changing `revision`. Apply every accepted manual change through `onDocumentChange`. The callback's optional `PageBuilderChange` contains a human-readable label and an editing merge key. The editor records manual changes, external document changes, and applied proposals in one bounded undo/redo history.
+
+`onRequest` receives the prompt, page or block scope, and base revision. It can return a promise. Rejections keep the draft and show the error for retry. Supply `generating` and `onStop` when the application supports cancellation. The application must verify `expectedRevision` in `onApplyProposal` before committing a proposal. A proposal is immutable by ID and includes its original document for comparisons. Editing after a request invalidates its apply action.
+
+Selection, draft, view, breakpoint, and panel sizes can be controlled by the host. Desktop, tablet, and mobile block styles cascade from larger to smaller breakpoints. The inspector distinguishes inherited fields from overrides and resets an override without changing the inherited value. `tokens` supplies named colors from the application's design system.
+
+`onSessionChange` receives a serializable `VibeBuilderSession` including document, selection, unsent draft, view, panel sizes, and history. Store it with application conversation data. Validate persisted input with `restoreVibeBuilderSession(value, projectId)`, then supply the restored document, revision, and `initialSession` when mounting the editor. Change `projectId` to switch projects. `onSaveSession` enables explicit save/retry controls. Its promise preserves drafts and history on failure. `saveState` optionally displays the host's persistence status. Storage and model execution are supplied by the consuming app.
+
+The gallery's **Vibe coding editor** includes architecture, product, and blank starters, a registered Notice card, deterministic prompt examples, stop/retry controls, failed-save demonstrations, and browser session recovery. Select **Fail next request** or **Fail next save** to exercise recovery, and use **Reset demo** to restore the starter after confirmation.
+
+```tsx
+// src/Editor.tsx
+import {
+  VibeCodingEditor,
+  type BuilderDocument,
+  type VibeBuilderApplyRequest,
+  type VibeBuilderPromptRequest,
+  type VibeBuilderSession,
+} from "@sultanico/ai-ui";
+
+export interface EditorHost {
+  document: BuilderDocument;
+  revision: string;
+  change(document: BuilderDocument): void;
+  request(value: VibeBuilderPromptRequest): Promise<void>;
+  apply(value: VibeBuilderApplyRequest): Promise<void>;
+  save(session: VibeBuilderSession): Promise<void>;
+}
+
+export function Editor({ host }: { host: EditorHost }) {
+  return (
+    <VibeCodingEditor
+      projectId="website"
+      title={host.document.title}
+      document={host.document}
+      revision={host.revision}
+      onDocumentChange={host.change}
+      onRequest={host.request}
+      onApplyProposal={host.apply}
+      onSaveSession={host.save}
+    />
+  );
+}
+```
+
 ## License
 
 [MIT](LICENSE) © 2026 Sultani Investments, LLC. Icon paths embedded in `src/lib/rich-text/html-media.ts` come from Lucide (ISC) and Feather (MIT) and keep their notices in that file.
