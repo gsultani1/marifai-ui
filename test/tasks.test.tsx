@@ -22,6 +22,7 @@ import {
   type TaskBulkAction,
   type TaskFieldConflict,
 } from "../src/index.js";
+import { isDisabled } from "./helpers.js";
 
 function deferred() {
   let resolve!: () => void;
@@ -185,7 +186,7 @@ describe("TaskBulkActionBar", () => {
 
   it("disables applying when there are no actions", () => {
     render(<TaskBulkActionBar selectedIds={["t1"]} actions={[]} onApply={vi.fn()} />);
-    expect((screen.getByRole("button", { name: "Apply to selected" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(isDisabled((screen.getByRole("button", { name: "Apply to selected" }) as HTMLButtonElement))).toBe(true);
   });
 });
 
@@ -273,7 +274,7 @@ describe("TaskConflictReview", () => {
   it("says when there are no conflicts and disables applying", () => {
     render(<TaskConflictReview conflicts={[]} onSubmit={vi.fn()} />);
     expect(screen.getByText("No conflicting fields.")).toBeTruthy();
-    expect((screen.getByRole("button", { name: "Apply resolutions" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(isDisabled((screen.getByRole("button", { name: "Apply resolutions" }) as HTMLButtonElement))).toBe(true);
   });
 });
 
@@ -325,7 +326,7 @@ describe("TaskDependencyEditor", () => {
     expect(screen.getAllByRole("button", { name: "Remove prerequisite Clean the paint counter" })).toHaveLength(1);
     expect(screen.getByRole("button", { name: "Remove prerequisite legacy-9" })).toBeTruthy();
     const remove = screen.getByRole("button", { name: "Remove prerequisite Clean the paint counter" }) as HTMLButtonElement;
-    expect(remove.disabled).toBe(true);
+    expect(isDisabled(remove)).toBe(true);
     fireEvent.click(remove);
     expect(onRemove).not.toHaveBeenCalled();
     fireEvent.change(select("Prerequisite"), { target: { value: "t2" } });
@@ -393,7 +394,7 @@ describe("TaskEffortSplitEditor", () => {
   it("disables saving when there is nothing to split", () => {
     render(<TaskEffortSplitEditor items={[]} estimateMinutes={60} onSubmit={vi.fn()} />);
     expect(screen.getByRole("status").textContent).toBe("0 of 60 estimated minutes");
-    expect((screen.getByRole("button", { name: "Save allocation" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(isDisabled((screen.getByRole("button", { name: "Save allocation" }) as HTMLButtonElement))).toBe(true);
   });
 });
 
@@ -480,7 +481,7 @@ describe("TaskProgressRollup", () => {
     fireEvent.click(screen.getByRole("button", { name: "View completed" }));
     expect(onOpenGroup).toHaveBeenCalledWith("completed", ["a", "b"]);
     const blocked = screen.getByRole("button", { name: "View blocked" }) as HTMLButtonElement;
-    expect(blocked.disabled).toBe(true);
+    expect(isDisabled(blocked)).toBe(true);
     fireEvent.click(blocked);
     expect(onOpenGroup).toHaveBeenCalledTimes(1);
   });

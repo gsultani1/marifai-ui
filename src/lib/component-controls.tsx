@@ -58,7 +58,7 @@ export function ControlAction({ label, item, onClick, disabled }: {
   label: string; item?: string | undefined; onClick?: (() => void) | undefined; disabled?: boolean | undefined;
 }) {
   if (!onClick) return null;
-  return <Button type="button" size="sm" variant="outline" aria-label={item ? label + " " + item : undefined} disabled={disabled} onClick={onClick}>{label}</Button>;
+  return <Button type="button" size="sm" variant="outline" aria-label={item ? label + " " + item : undefined} disabled={disabled} focusableWhenDisabled onClick={onClick}>{label}</Button>;
 }
 
 export function ChoiceField<T extends string>({ label, value, options, onChange, placeholder, disabled }: {
@@ -107,7 +107,7 @@ export function AsyncForm({ label, submitLabel, children, validate, onSubmit, di
     <form aria-label={label} className="space-y-2" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
       <fieldset disabled={busy} className="min-w-0 space-y-2">{children}</fieldset>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" size="sm" loading={busy} disabled={disabled}>{submitLabel}</Button>
+      <Button type="submit" size="sm" loading={busy} disabled={disabled} focusableWhenDisabled>{submitLabel}</Button>
     </form>
   );
 }

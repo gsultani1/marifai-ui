@@ -27,6 +27,7 @@ import {
   type InspectedBrowserRequest,
   type OpenBrowserTab,
 } from "../src/index.js";
+import { isDisabled } from "./helpers.js";
 
 const listTexts = (container: HTMLElement) => within(container).getAllByRole("listitem").map((item) => item.querySelector("p")?.textContent);
 
@@ -72,7 +73,7 @@ describe("BookmarkManager", () => {
     const form = screen.getByRole("form", { name: "Edit Return policy" });
     const name = within(form).getByRole("textbox", { name: "Bookmark name" });
     expect(document.activeElement).toBe(name);
-    expect((edit as HTMLButtonElement).disabled).toBe(true);
+    expect(isDisabled((edit as HTMLButtonElement))).toBe(true);
     expect((within(form).getByRole("combobox", { name: "Folder" }) as HTMLSelectElement).value).toBe("");
 
     fireEvent.change(name, { target: { value: "  Returns and exchanges  " } });
@@ -190,7 +191,7 @@ describe("BrowserDownloadList", () => {
     const onAction = vi.fn();
     render(<BrowserDownloadList downloads={downloads} onAction={onAction} pendingIds={["manual"]} />);
     const pause = screen.getByRole("button", { name: "Pause drill-manual.pdf" }) as HTMLButtonElement;
-    expect(pause.disabled).toBe(true);
+    expect(isDisabled(pause)).toBe(true);
     fireEvent.click(pause);
     fireEvent.click(screen.getByRole("button", { name: "Cancel drill-manual.pdf" }));
     expect(onAction).not.toHaveBeenCalled();
@@ -414,7 +415,7 @@ describe("BrowserSessionRestore", () => {
     const onRestore = vi.fn().mockResolvedValue(undefined);
     render(<BrowserSessionRestore windows={windows} onRestore={onRestore} />);
     const submit = screen.getByRole("button", { name: "Restore selected tabs" }) as HTMLButtonElement;
-    expect(submit.disabled).toBe(true);
+    expect(isDisabled(submit)).toBe(true);
     expect(screen.getByRole("treeitem", { name: "Closed window" }).getAttribute("aria-disabled")).toBe("true");
 
     fireEvent.click(screen.getByRole("treeitem", { name: "Supplier research" }));
@@ -426,7 +427,7 @@ describe("BrowserSessionRestore", () => {
     await act(async () => { fireEvent.click(submit); });
     expect(onRestore).toHaveBeenCalledWith([{ windowId: "w1", tabIds: ["t1", "t2"] }, { windowId: "w2", tabIds: ["t3"] }]);
     expect(screen.getByRole("treeitem", { name: "Supplier research" }).getAttribute("aria-checked")).toBe("false");
-    expect(submit.disabled).toBe(true);
+    expect(isDisabled(submit)).toBe(true);
   });
 
   it("restores a single tab and keeps the selection with an alert when restoring fails", async () => {
@@ -444,7 +445,7 @@ describe("BrowserSessionRestore", () => {
   it("says when there are no windows to restore", () => {
     render(<BrowserSessionRestore windows={[]} onRestore={vi.fn()} />);
     expect(screen.getByText("No windows to restore.")).toBeTruthy();
-    expect((screen.getByRole("button", { name: "Restore selected tabs" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(isDisabled((screen.getByRole("button", { name: "Restore selected tabs" }) as HTMLButtonElement))).toBe(true);
   });
 });
 
@@ -513,7 +514,7 @@ describe("OpenTabPicker", () => {
     expect(onOpen).toHaveBeenCalledWith("c");
     expect(onAttach).toHaveBeenCalledWith("a");
     const attached = screen.getByRole("button", { name: "Attached Supplier portal" }) as HTMLButtonElement;
-    expect(attached.disabled).toBe(true);
+    expect(isDisabled(attached)).toBe(true);
     fireEvent.click(attached);
     expect(onAttach).toHaveBeenCalledTimes(1);
   });
@@ -609,10 +610,10 @@ describe("PageFindBar", () => {
     const { rerender } = render(<PageFindBar query="drill" onQueryChange={vi.fn()} currentMatch={1} matchCount={3} onMove={onMove} pending />);
     expect(screen.getByRole("status").textContent).toBe("Searching…");
     const next = screen.getByRole("button", { name: "Next match" }) as HTMLButtonElement;
-    expect(next.disabled).toBe(true);
+    expect(isDisabled(next)).toBe(true);
     fireEvent.keyDown(screen.getByRole("searchbox", { name: "Find text" }), { key: "Enter" });
     rerender(<PageFindBar query="" onQueryChange={vi.fn()} currentMatch={null} matchCount={3} onMove={onMove} />);
-    expect((screen.getByRole("button", { name: "Previous match" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(isDisabled((screen.getByRole("button", { name: "Previous match" }) as HTMLButtonElement))).toBe(true);
     rerender(<PageFindBar query="lathe" onQueryChange={vi.fn()} currentMatch={null} matchCount={0} onMove={onMove} />);
     fireEvent.click(screen.getByRole("button", { name: "Next match" }));
     expect(onMove).not.toHaveBeenCalled();

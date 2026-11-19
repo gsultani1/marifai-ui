@@ -22,6 +22,7 @@ import {
   toIsoDate,
   type AssistantRoutineDraft,
 } from "../src/index.js";
+import { isDisabled } from "./helpers.js";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -117,7 +118,7 @@ describe("AssistantAvailabilityPollReview", () => {
     const onPropose = vi.fn();
     render(<AssistantAvailabilityPollReview slots={slots} participants={participants} timeZone="UTC" onPropose={onPropose} />);
     const button = screen.getByRole<HTMLButtonElement>("button", { name: "Propose time" });
-    expect(button.disabled).toBe(true);
+    expect(isDisabled(button)).toBe(true);
     fireEvent.change(select("Proposed time"), { target: { value: "mon" } });
     expect(button.disabled).toBe(false);
     await submit("Propose time");
@@ -176,7 +177,7 @@ describe("AssistantConflictReview", () => {
 
   it("locks only the conflict that is being resolved", () => {
     render(<AssistantConflictReview conflicts={conflicts} onChoose={vi.fn()} pendingIds={["c1"]} />);
-    expect(screen.getByRole<HTMLButtonElement>("button", { name: "Choose Decline the later event for Supplier call overlaps staff huddle" }).disabled).toBe(true);
+    expect(isDisabled(screen.getByRole<HTMLButtonElement>("button", { name: "Choose Decline the later event for Supplier call overlaps staff huddle" }))).toBe(true);
     expect(screen.getByRole<HTMLButtonElement>("button", { name: "Choose Decline the later event for Delivery window overlaps lunch" }).disabled).toBe(false);
   });
 
@@ -216,7 +217,7 @@ describe("AssistantContactPicker", () => {
   it("marks the current contact as selected and disables choosing it again", () => {
     render(<AssistantContactPicker contacts={contacts} value="luis" onSelect={vi.fn()} />);
     const current = screen.getByRole<HTMLButtonElement>("button", { name: "Selected Luis Ortega" });
-    expect(current.disabled).toBe(true);
+    expect(isDisabled(current)).toBe(true);
     expect(current.textContent).toBe("Selected");
   });
 
@@ -399,7 +400,7 @@ describe("AssistantInboxTriage", () => {
 
   it("locks triage for pending items while still allowing them to be opened", () => {
     render(<AssistantInboxTriage items={items} onTriage={vi.fn()} onOpen={vi.fn()} pendingIds={["m1"]} />);
-    expect(screen.getByRole<HTMLButtonElement>("button", { name: "File Invoice from Orgill" }).disabled).toBe(true);
+    expect(isDisabled(screen.getByRole<HTMLButtonElement>("button", { name: "File Invoice from Orgill" }))).toBe(true);
     expect(screen.getByRole<HTMLButtonElement>("button", { name: "Open Invoice from Orgill" }).disabled).toBe(false);
     expect(screen.getByRole<HTMLButtonElement>("button", { name: "Follow up Voicemail from Dana" }).disabled).toBe(false);
   });
@@ -445,7 +446,7 @@ describe("AssistantNotificationPreferences", () => {
   it("disables saving when there are no channels", () => {
     render(<AssistantNotificationPreferences options={[]} onSave={vi.fn()} />);
     expect(screen.getByText("No channels available.")).toBeTruthy();
-    expect(screen.getByRole<HTMLButtonElement>("button", { name: "Save preferences" }).disabled).toBe(true);
+    expect(isDisabled(screen.getByRole<HTMLButtonElement>("button", { name: "Save preferences" }))).toBe(true);
   });
 });
 
@@ -545,7 +546,7 @@ describe("AssistantRoutineEditor", () => {
     const onSubmit = vi.fn();
     render(<AssistantRoutineEditor initialValue={routine} timeZones={zones} onSubmit={onSubmit} />);
     const addButton = screen.getByRole<HTMLButtonElement>("button", { name: "Add step" });
-    expect(addButton.disabled).toBe(true);
+    expect(isDisabled(addButton)).toBe(true);
     const field = screen.getByRole("textbox", { name: "New routine step" });
     fireEvent.change(field, { target: { value: " Turn on the lights " } });
     fireEvent.click(addButton);

@@ -38,12 +38,30 @@ export function OrderedList<T extends CollectionItem>({ items, label, itemLabel,
     </div>} />;
 }
 
+/** Ids of the ancestors of `id`, outermost first, or null when it is not in the tree. */
+function ancestorsOf<T extends { id: string; children?: readonly T[] }>(items: readonly T[], id: string | null | undefined, trail: string[] = []): string[] | null {
+  if (!id) return null;
+  for (const item of items) {
+    if (item.id === id) return trail;
+    const found = ancestorsOf(item.children ?? [], id, [...trail, item.id]);
+    if (found) return found;
+  }
+  return null;
+}
+
 export function LabeledTree<T extends { id: string; label: string; children?: readonly T[] }>({ items, label, activeId, onSelect, detail, searchable }: {
   items: readonly T[]; label: string; activeId?: string | null; onSelect?: ((id: string) => void) | undefined;
   detail?: (item: T) => string | undefined; searchable?: boolean;
 }) {
   const [query, setQuery] = useState("");
-  const [expanded, setExpanded] = useState<string[]>([]);
+  // Start with the active node visible, and reveal it again whenever it moves into a collapsed branch.
+  const [expanded, setExpanded] = useState<string[]>(() => ancestorsOf(items, activeId) ?? []);
+  const [revealed, setRevealed] = useState(activeId);
+  if (revealed !== activeId) {
+    setRevealed(activeId);
+    const path = ancestorsOf(items, activeId) ?? [];
+    if (path.some((id) => !expanded.includes(id))) setExpanded([...new Set([...expanded, ...path])]);
+  }
   const found = new Map<string, T>();
   const parents: string[] = [];
   function build(entries: readonly T[]): TreeNode[] {
@@ -61,6 +79,8 @@ export function LabeledTree<T extends { id: string; label: string; children?: re
     <TreeView label={label} nodes={nodes} expanded={query.trim() ? parents : expanded} onExpandedChange={setExpanded}
       selected={activeId && found.has(activeId) ? [activeId] : []} selectionMode={onSelect ? "single" : "none"}
       onSelectedChange={(ids) => { if (ids[0]) onSelect?.(ids[0]); }}
+      // Selecting the node that is already selected changes nothing, so Enter on it would otherwise do nothing.
+      onAction={onSelect ? (node) => { if (node.id === activeId) onSelect(node.id); } : undefined}
       renderLabel={(node) => {
         const item = found.get(node.id);
         const description = item && detail?.(item);

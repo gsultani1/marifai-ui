@@ -30,6 +30,7 @@ import {
   type McpResourceSubscription,
   type ReportedWorker,
 } from "../src/index.js";
+import { isDisabled } from "./helpers.js";
 
 const select = (name: string) => screen.getByRole("combobox", { name }) as HTMLSelectElement;
 const button = (name: string) => screen.getByRole("button", { name }) as HTMLButtonElement;
@@ -64,7 +65,7 @@ describe("AgentArtifactInbox", () => {
     render(<AgentArtifactInbox artifacts={artifacts} onOpen={onOpen} />);
     expect(screen.getByText("Support agent · report · Unavailable")).toBeTruthy();
     const open = button("Open Support macro draft");
-    expect(open.disabled).toBe(true);
+    expect(isDisabled(open)).toBe(true);
     fireEvent.click(open);
     expect(onOpen).not.toHaveBeenCalled();
   });
@@ -114,11 +115,11 @@ describe("AgentEscalationCard", () => {
     expect(screen.getByRole("region", { name: "Agent escalation" })).toBeTruthy();
     expect(screen.getByText("The research run used its $50 budget.")).toBeTruthy();
     expect(screen.getByText("Assigns the run to support · No one is on call")).toBeTruthy();
-    expect(button("Submit decision").disabled).toBe(true);
+    expect(isDisabled(button("Submit decision"))).toBe(true);
     expect((screen.getByRole("option", { name: "Hand off to a person" }) as HTMLOptionElement).disabled).toBe(true);
     fireEvent.change(select("Decision"), { target: { value: "handoff" } });
     expect(select("Decision").value).toBe("");
-    expect(button("Submit decision").disabled).toBe(true);
+    expect(isDisabled(button("Submit decision"))).toBe(true);
   });
 
   it("sends the escalation and decision ids and clears the choice once the decision is accepted", async () => {
@@ -130,7 +131,7 @@ describe("AgentEscalationCard", () => {
     await act(async () => { fireEvent.click(button("Submit decision")); });
     expect(onDecide).toHaveBeenCalledWith("esc-1", "extend");
     expect(select("Decision").value).toBe("");
-    expect(button("Submit decision").disabled).toBe(true);
+    expect(isDisabled(button("Submit decision"))).toBe(true);
   });
 
   it("shows a failed decision as an alert and keeps the choice for another try", async () => {
@@ -150,13 +151,13 @@ describe("AgentEscalationCard", () => {
     rerender(<AgentEscalationCard escalationId="esc-2" title="Unknown tool requested" description="Choose."
       decisions={decisions} onDecide={vi.fn()} />);
     expect(select("Decision").value).toBe("");
-    expect(button("Submit decision").disabled).toBe(true);
+    expect(isDisabled(button("Submit decision"))).toBe(true);
   });
 
   it("says when no decisions are available", () => {
     render(<AgentEscalationCard escalationId="esc-1" title="Budget limit reached" description="Choose." decisions={[]} onDecide={vi.fn()} />);
     expect(screen.getByText("No decisions available.")).toBeTruthy();
-    expect(button("Submit decision").disabled).toBe(true);
+    expect(isDisabled(button("Submit decision"))).toBe(true);
   });
 });
 
@@ -553,7 +554,7 @@ describe("RunRecoveryPanel", () => {
     render(<RunRecoveryPanel checkpoints={[]} onRestart={onRestart} restartUnavailableReason="The run already sent emails." />);
     expect(screen.getByText("No checkpoints available.")).toBeTruthy();
     expect(screen.getByText("The run already sent emails.")).toBeTruthy();
-    expect(button("Restart run").disabled).toBe(true);
+    expect(isDisabled(button("Restart run"))).toBe(true);
     fireEvent.click(button("Restart run"));
     expect(onRestart).not.toHaveBeenCalled();
   });

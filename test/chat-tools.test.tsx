@@ -22,6 +22,7 @@ import {
   type ConversationFork,
   type MessageSearchHit,
 } from "../src/index.js";
+import { isDisabled } from "./helpers.js";
 
 const checkbox = (name: string) => screen.getByRole("checkbox", { name }) as HTMLInputElement;
 const button = (name: string) => screen.getByRole("button", { name }) as HTMLButtonElement;
@@ -185,7 +186,7 @@ describe("ChatRedactionReview", () => {
     const onSubmit = vi.fn();
     render(<ChatRedactionReview suggestions={[]} onSubmit={onSubmit} />);
     expect(screen.getByText("No suggested redactions.")).toBeTruthy();
-    expect(button("Apply redactions").disabled).toBe(true);
+    expect(isDisabled(button("Apply redactions"))).toBe(true);
     await act(async () => { fireEvent.submit(screen.getByRole("form", { name: "Review redactions" })); });
     expect(onSubmit).not.toHaveBeenCalled();
   });
@@ -242,8 +243,8 @@ describe("CitationNavigator", () => {
     const onOpen = vi.fn();
     render(<CitationNavigator citations={citations} activeId={null} onChange={onChange} onOpen={onOpen} />);
     expect(screen.getByText("3 citations")).toBeTruthy();
-    expect(button("Previous citation").disabled).toBe(true);
-    expect(button("Open source").disabled).toBe(true);
+    expect(isDisabled(button("Previous citation"))).toBe(true);
+    expect(isDisabled(button("Open source"))).toBe(true);
     fireEvent.click(button("Next citation"));
     expect(onChange).toHaveBeenCalledWith("c1");
     expect(onOpen).not.toHaveBeenCalled();
@@ -267,7 +268,7 @@ describe("CitationNavigator", () => {
     expect(onOpen).toHaveBeenCalledWith("c2");
 
     rerender(<CitationNavigator citations={citations} activeId="c3" onChange={onChange} onOpen={onOpen} />);
-    expect(button("Next citation").disabled).toBe(true);
+    expect(isDisabled(button("Next citation"))).toBe(true);
   });
 
   it("shows an empty state without navigation when there are no citations", () => {
@@ -371,7 +372,7 @@ describe("ConversationSummaryEditor", () => {
     const field = screen.getByRole("textbox", { name: "Summary" }) as HTMLTextAreaElement;
     expect(field.value).toBe("Customer wants cedar stain.");
     fireEvent.change(field, { target: { value: "   " } });
-    expect(button("Save summary").disabled).toBe(true);
+    expect(isDisabled(button("Save summary"))).toBe(true);
     fireEvent.change(field, { target: { value: "  Customer wants three gallons of cedar stain by Friday.  " } });
     await act(async () => { fireEvent.click(button("Save summary")); });
     expect(onSubmit).toHaveBeenCalledWith("Customer wants three gallons of cedar stain by Friday.");
@@ -433,7 +434,7 @@ describe("MessageFeedbackForm", () => {
   it("requires a rating, sends the trimmed comment for the message, clears and confirms", async () => {
     const onSubmit = vi.fn();
     render(<MessageFeedbackForm messageId="m9" onSubmit={onSubmit} />);
-    expect(button("Send feedback").disabled).toBe(true);
+    expect(isDisabled(button("Send feedback"))).toBe(true);
     fireEvent.change(screen.getByRole("combobox", { name: "Rating" }), { target: { value: "negative" } });
     fireEvent.change(screen.getByRole("textbox", { name: "Feedback (optional)" }), { target: { value: "  Quoted the wrong stain price.  " } });
     await act(async () => { fireEvent.click(button("Send feedback")); });
@@ -441,7 +442,7 @@ describe("MessageFeedbackForm", () => {
     expect((screen.getByRole("combobox", { name: "Rating" }) as HTMLSelectElement).value).toBe("");
     expect((screen.getByRole("textbox", { name: "Feedback (optional)" }) as HTMLTextAreaElement).value).toBe("");
     expect(screen.getByRole("status").textContent).toBe("Feedback sent. Thank you.");
-    expect(button("Send feedback").disabled).toBe(true);
+    expect(isDisabled(button("Send feedback"))).toBe(true);
 
     fireEvent.change(screen.getByRole("combobox", { name: "Rating" }), { target: { value: "positive" } });
     expect(screen.getByRole("status").textContent).toBe("");

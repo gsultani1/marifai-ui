@@ -22,6 +22,7 @@ import {
   type AutomationSchedule,
   type ToolParameter,
 } from "../src/index.js";
+import { isDisabled } from "./helpers.js";
 
 function textbox(name: string) {
   return screen.getByRole("textbox", { name }) as HTMLInputElement;
@@ -46,13 +47,13 @@ describe("AutomationActionBuilder", () => {
     const onAdd = vi.fn();
     render(<AutomationActionBuilder steps={steps} actions={actions} onAdd={onAdd} onRemove={vi.fn()} onReorder={vi.fn()} />);
     const add = screen.getByRole("button", { name: "Add action" }) as HTMLButtonElement;
-    expect(add.disabled).toBe(true);
+    expect(isDisabled(add)).toBe(true);
     fireEvent.change(combobox("Action"), { target: { value: "post" } });
     expect(add.disabled).toBe(false);
     fireEvent.click(add);
     expect(onAdd).toHaveBeenCalledWith("post");
     expect(combobox("Action").value).toBe("");
-    expect(add.disabled).toBe(true);
+    expect(isDisabled(add)).toBe(true);
   });
 
   it("lists steps in order with their detail and removes a step by id", () => {
@@ -87,7 +88,7 @@ describe("AutomationActionBuilder", () => {
     rerender(<AutomationActionBuilder steps={[steps[0]!]} actions={actions.filter((item) => item.id !== "email")} onAdd={vi.fn()} onRemove={vi.fn()} onReorder={vi.fn()} />);
     expect(screen.getByRole("status").textContent).toBe("1 action");
     expect(combobox("Action").value).toBe("");
-    expect((screen.getByRole("button", { name: "Add action" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(isDisabled((screen.getByRole("button", { name: "Add action" }) as HTMLButtonElement))).toBe(true);
   });
 });
 
@@ -187,8 +188,8 @@ describe("AutomationDeadLetterQueue", () => {
     render(<AutomationDeadLetterQueue deliveries={deliveries} onInspect={vi.fn()} onRetry={onRetry} pendingIds={["d1"]} />);
     const pending = screen.getByRole("button", { name: "Retry Restock email to Orgill" }) as HTMLButtonElement;
     const unavailable = screen.getByRole("button", { name: "Retry Low stock post" }) as HTMLButtonElement;
-    expect(pending.disabled).toBe(true);
-    expect(unavailable.disabled).toBe(true);
+    expect(isDisabled(pending)).toBe(true);
+    expect(isDisabled(unavailable)).toBe(true);
     expect(screen.getByText("Nov 18, 6:02 AM · Mailbox full · Retrying")).toBeTruthy();
     expect(screen.getByText("Nov 18, 6:07 AM · Channel archived · Choose a new channel first")).toBeTruthy();
     fireEvent.click(pending);

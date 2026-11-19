@@ -74,6 +74,20 @@ describe("ControlAction", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(onClick).not.toHaveBeenCalled();
   });
+
+  it("stays focusable when it becomes disabled so keyboard focus is not dropped", () => {
+    const onClick = vi.fn();
+    const { rerender } = render(<ControlAction label="Retry" item="Order 4410" onClick={onClick} />);
+    const button = screen.getByRole("button", { name: "Retry Order 4410" }) as HTMLButtonElement;
+    button.focus();
+    rerender(<ControlAction label="Retry" item="Order 4410" onClick={onClick} disabled />);
+    expect(button.disabled).toBe(false);
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+    expect(button.tabIndex).toBeGreaterThanOrEqual(0);
+    expect(document.activeElement).toBe(button);
+    fireEvent.click(button);
+    expect(onClick).not.toHaveBeenCalled();
+  });
 });
 
 describe("ChoiceField", () => {
@@ -128,6 +142,14 @@ describe("AsyncForm", () => {
 
     await act(async () => { fireEvent.submit(form); });
     expect(screen.getByRole("alert").textContent).toBe("The scheduler is offline.");
+  });
+
+  it("keeps its submit button focusable when the form becomes disabled after a submit", () => {
+    const { rerender } = render(<AsyncForm label="Feedback" submitLabel="Send feedback" onSubmit={vi.fn()}>{null}</AsyncForm>);
+    const submit = screen.getByRole("button", { name: "Send feedback" }) as HTMLButtonElement;
+    rerender(<AsyncForm label="Feedback" submitLabel="Send feedback" onSubmit={vi.fn()} disabled>{null}</AsyncForm>);
+    expect(submit.disabled).toBe(false);
+    expect(submit.getAttribute("aria-disabled")).toBe("true");
   });
 
   it("falls back to a generic message when the error has none and does nothing while disabled", async () => {
@@ -193,5 +215,28 @@ describe("LabeledTree", () => {
     expect(screen.queryByText("Global")).toBeNull();
     fireEvent.click(screen.getByText("quantity"));
     expect(onSelect).toHaveBeenCalledWith("qty");
+  });
+
+  it("starts with the active node's ancestors expanded and reveals a new active node in a collapsed branch", () => {
+    const tree = [
+      { id: "main", label: "Main conversation", children: [
+        { id: "fork-a", label: "Price check", children: [{ id: "fork-a1", label: "Supplier follow-up", children: [] }] },
+      ] },
+      { id: "other", label: "Returns thread", children: [{ id: "fork-b", label: "Refund wording", children: [] }] },
+    ];
+    const { rerender } = render(<LabeledTree items={tree} label="Forks" activeId="fork-a1" onSelect={vi.fn()} />);
+    expect(screen.getByText("Supplier follow-up")).toBeTruthy();
+    expect(screen.queryByText("Refund wording")).toBeNull();
+    rerender(<LabeledTree items={tree} label="Forks" activeId="fork-b" onSelect={vi.fn()} />);
+    expect(screen.getByText("Refund wording")).toBeTruthy();
+    expect(screen.getByText("Supplier follow-up")).toBeTruthy();
+  });
+
+  it("reports the already active node again when it is activated with Enter", () => {
+    const onSelect = vi.fn();
+    render(<LabeledTree items={scopes} label="Variable scopes" activeId="global" onSelect={onSelect} />);
+    const active = screen.getByRole("treeitem", { name: /Global/ });
+    fireEvent.keyDown(active, { key: "Enter" });
+    expect(onSelect).toHaveBeenCalledWith("global");
   });
 });

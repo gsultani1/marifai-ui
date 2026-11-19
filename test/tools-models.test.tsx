@@ -24,6 +24,7 @@ import {
   type ToolApprovalPolicyRow,
   type ToolParameter,
 } from "../src/index.js";
+import { isDisabled } from "./helpers.js";
 
 async function click(element: HTMLElement) {
   await act(async () => {
@@ -550,7 +551,7 @@ describe("ToolResourcePicker", () => {
     const onSelect = vi.fn();
     render(<ToolResourcePicker resources={resources} selectedId="catalog" onSelect={onSelect} />);
     const selected = screen.getByRole("button", { name: "Selected Product catalog" }) as HTMLButtonElement;
-    expect(selected.disabled).toBe(true);
+    expect(isDisabled(selected)).toBe(true);
     fireEvent.click(selected);
     expect(onSelect).not.toHaveBeenCalled();
   });

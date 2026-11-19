@@ -22,6 +22,7 @@ import {
   TestExplorer,
   type EditorSearchOptions,
 } from "../src/index.js";
+import { isDisabled } from "./helpers.js";
 
 const button = (name: string) => screen.getByRole("button", { name }) as HTMLButtonElement;
 
@@ -63,7 +64,7 @@ describe("BreakpointList", () => {
     const onRemove = vi.fn();
     render(<BreakpointList breakpoints={breakpoints} pendingIds={["b1"]} onEnabledChange={onEnabledChange} onEdit={vi.fn()} onRemove={onRemove} />);
     expect((screen.getByRole("checkbox", { name: "Enabled src/cart.ts:18:4" }) as HTMLInputElement).disabled).toBe(true);
-    expect(button("Edit src/cart.ts:18:4").disabled).toBe(true);
+    expect(isDisabled(button("Edit src/cart.ts:18:4"))).toBe(true);
     fireEvent.click(button("Remove src/cart.ts:18:4"));
     expect(onRemove).not.toHaveBeenCalled();
     expect(screen.getByText("Enabled · Updating…")).toBeTruthy();
@@ -145,7 +146,7 @@ describe("CodeReviewFileNavigator", () => {
   it("shows an empty message without files", () => {
     render(<CodeReviewFileNavigator files={[]} activeId={null} onOpen={vi.fn()} />);
     expect(screen.getByText("No files to review.")).toBeTruthy();
-    expect(button("Next unreviewed file").disabled).toBe(true);
+    expect(isDisabled(button("Next unreviewed file"))).toBe(true);
   });
 });
 
@@ -165,7 +166,7 @@ describe("DebugCallStack", () => {
     const onOpenSource = vi.fn();
     render(<DebugCallStack threads={threads} threadId="main" frameId="fr1" onThreadChange={onThreadChange} onFrameChange={onFrameChange} onOpenSource={onOpenSource} />);
     expect(screen.getByText("src/cart.ts:31:5 · Selected frame")).toBeTruthy();
-    expect(button("Select frame applyDiscount").disabled).toBe(true);
+    expect(isDisabled(button("Select frame applyDiscount"))).toBe(true);
     fireEvent.click(button("Select frame checkout"));
     expect(onFrameChange).toHaveBeenCalledWith("main", "fr2");
     fireEvent.click(button("Open source checkout"));
@@ -234,7 +235,7 @@ describe("DebugWatchExpressions", () => {
   it("adds a trimmed expression and clears the draft after saving", async () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
     render(<DebugWatchExpressions expressions={expressions} onSave={onSave} />);
-    expect(button("Add expression").disabled).toBe(true);
+    expect(isDisabled(button("Add expression"))).toBe(true);
     const input = screen.getByRole("textbox", { name: "Expression" }) as HTMLInputElement;
     fireEvent.change(input, { target: { value: "  cart.items[0].sku  " } });
     await act(async () => {
@@ -292,7 +293,7 @@ describe("DebugWatchExpressions", () => {
     const onRefresh = vi.fn();
     render(<DebugWatchExpressions expressions={expressions} onSave={vi.fn()} onRefresh={onRefresh} pendingIds={["w1"]} />);
     expect(screen.getByText("42.5 · Updating…")).toBeTruthy();
-    expect(button("Edit cart.total").disabled).toBe(true);
+    expect(isDisabled(button("Edit cart.total"))).toBe(true);
     fireEvent.click(button("Refresh cart.total"));
     expect(onRefresh).not.toHaveBeenCalled();
   });
@@ -333,7 +334,7 @@ describe("EditorDiagnosticsSummary", () => {
     expect(screen.getByText("No diagnostics.")).toBeTruthy();
     fireEvent.click(button("0 errors in all files"));
     expect(onOpen).not.toHaveBeenCalled();
-    expect(button("0 info messages in all files").disabled).toBe(true);
+    expect(isDisabled(button("0 info messages in all files"))).toBe(true);
   });
 });
 
@@ -376,7 +377,7 @@ describe("EditorFindReplace", () => {
     fireEvent.click(button("Next match"));
     rerender(<EditorFindReplace value={value} matches={0} {...props} />);
     expect(screen.getByRole("status").textContent).toBe("0 matches");
-    expect(button("Replace all").disabled).toBe(true);
+    expect(isDisabled(button("Replace all"))).toBe(true);
     rerender(<EditorFindReplace value={{ ...value, query: "" }} matches={0} {...props} />);
     expect(screen.getByRole("status").textContent).toBe("Enter text to find.");
     fireEvent.click(button("Previous match"));
@@ -455,13 +456,13 @@ describe("EditorLocationHistory", () => {
     expect(onOpen).toHaveBeenLastCalledWith(entries[1]);
     fireEvent.click(button("Open location src/cart.ts:12"));
     expect(onOpen).toHaveBeenLastCalledWith(entries[0]);
-    expect(button("Previous location").disabled).toBe(true);
+    expect(isDisabled(button("Previous location"))).toBe(true);
   });
 
   it("disables both directions without a current entry and shows an empty message without entries", () => {
     const { rerender } = render(<EditorLocationHistory entries={entries} activeId={null} onOpen={vi.fn()} />);
-    expect(button("Previous location").disabled).toBe(true);
-    expect(button("Next location").disabled).toBe(true);
+    expect(isDisabled(button("Previous location"))).toBe(true);
+    expect(isDisabled(button("Next location"))).toBe(true);
     rerender(<EditorLocationHistory entries={[]} activeId={null} onOpen={vi.fn()} />);
     expect(screen.getByText("No recorded locations.")).toBeTruthy();
   });
@@ -537,7 +538,7 @@ describe("GitBranchPicker", () => {
     fireEvent.click(button("Check out feature/receipt-printer"));
     expect(onCheckout).toHaveBeenCalledWith("feat");
     expect(screen.getByText("Local · Current branch")).toBeTruthy();
-    expect(button("Check out main").disabled).toBe(true);
+    expect(isDisabled(button("Check out main"))).toBe(true);
     expect(screen.getByText("Local · Checked out in another worktree")).toBeTruthy();
     fireEvent.click(button("Check out release/2.4"));
     expect(screen.getByText("Remote · Checking out…")).toBeTruthy();
@@ -601,7 +602,7 @@ describe("GitCommitForm", () => {
   it("cannot commit without staged files", () => {
     render(<GitCommitForm stagedFiles={[]} onCommit={vi.fn()} />);
     expect(screen.getByText("No staged files.")).toBeTruthy();
-    expect(button("Commit").disabled).toBe(true);
+    expect(isDisabled(button("Commit"))).toBe(true);
   });
 });
 
@@ -703,7 +704,7 @@ describe("TestExplorer", () => {
     expect(onRun).toHaveBeenCalledWith("s1", "suite");
     fireEvent.click(button("Run test applies tax in cart"));
     expect(onRun).toHaveBeenLastCalledWith("t2", "test");
-    expect(button("Run test applies tax in receipt").disabled).toBe(true);
+    expect(isDisabled(button("Run test applies tax in receipt"))).toBe(true);
     expect(screen.getByText("receipt · Not run · Starting…")).toBeTruthy();
     fireEvent.click(button("Run test prints a footer in receipt"));
     expect(onRun).toHaveBeenCalledTimes(2);
