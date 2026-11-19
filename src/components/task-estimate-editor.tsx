@@ -16,7 +16,9 @@ export function TaskEstimateEditor({ initialMinutes, onSubmit, className }: Task
   const [unit, setUnit] = useState<"minutes" | "hours">("minutes");
   return <ControlPanel slot="task-estimate-editor" title="Task estimate" className={className}>
     <AsyncForm label="Task estimate" submitLabel="Save estimate" onSubmit={() => {
-      const minutes = requiredNumber(amount, "Estimate", 0, unit === "minutes") * (unit === "hours" ? 60 : 1);
+      const value = requiredNumber(amount, "Duration", 0, unit === "minutes");
+      // Hours may be fractional, but the estimate is reported in whole minutes.
+      const minutes = unit === "hours" ? Math.round(value * 60) : value;
       if (!Number.isFinite(minutes)) throw new Error("Enter a smaller estimate.");
       return onSubmit(minutes);
     }}>

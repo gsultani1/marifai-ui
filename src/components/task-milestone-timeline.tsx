@@ -20,9 +20,9 @@ export function TaskMilestoneTimeline({ milestones, onOpenTask, className }: Tas
     {milestones.length ? <ol className="space-y-3 border-s border-border ps-3">{milestones.map((item) => <li key={item.id} className="space-y-1">
       <h4 className="text-sm font-medium break-words">{item.title} · {item.date}</h4>
       {item.blockedDates?.length ? <p className="text-sm text-muted-foreground">Blocked dates · {item.blockedDates.join(", ")}</p> : null}
-      <ul className="space-y-1 text-sm">{item.tasks.map((task) => <li key={task.id}>
+      {item.tasks.length ? <ul className="space-y-1 text-sm">{item.tasks.map((task) => <li key={task.id}>
         <ControlAction label="Open task" item={task.title} onClick={onOpenTask && (() => onOpenTask(task.id))} /> {task.title}
-      </li>)}</ul>
+      </li>)}</ul> : <p className="text-sm text-muted-foreground">No tasks in this milestone.</p>}
     </li>)}</ol> : <p className="text-sm text-muted-foreground">No milestones.</p>}
   </ControlPanel>;
 }

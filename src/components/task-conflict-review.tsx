@@ -14,10 +14,15 @@ export interface TaskConflictReviewProps {
   className?: string;
 }
 
+/** A choice only counts for the exact values it was made against. */
+function choiceKey(item: TaskFieldConflict) {
+  return JSON.stringify([item.id, item.current, item.incoming]);
+}
+
 export function TaskConflictReview({ conflicts, onSubmit, className }: TaskConflictReviewProps) {
   const [chosen,setChosen] = useState(() => new Map<string,TaskConflictSide>());
   const decisions = conflicts.flatMap((item) => {
-    const side = chosen.get(item.id);
+    const side = chosen.get(choiceKey(item));
     return side ? [{id:item.id,side}] : [];
   });
   return <ControlPanel slot="task-conflict-review" title="Resolve task conflicts" className={className}>
@@ -27,15 +32,16 @@ export function TaskConflictReview({ conflicts, onSubmit, className }: TaskConfl
         return onSubmit(decisions);
       }}>
       <ItemList items={conflicts} empty="No conflicting fields." render={(item) => <>
-        <div className={comparisonGrid}>
-          <div><h4 className="text-sm font-medium">Current</h4><p className={contentBlock}>{item.current}</p></div>
-          <div><h4 className="text-sm font-medium">Incoming</h4><p className={contentBlock}>{item.incoming}</p></div>
-        </div>
-        <ChoiceField label={"Value for " + item.field} value={chosen.get(item.id) ?? ""} placeholder="Choose a value"
+        <h4 className="text-sm font-medium break-words">{item.field}</h4>
+        <dl className={comparisonGrid}>
+          <div className="min-w-0 space-y-1"><dt className="text-xs text-muted-foreground">Current</dt><dd className={contentBlock}>{item.current}</dd></div>
+          <div className="min-w-0 space-y-1"><dt className="text-xs text-muted-foreground">Incoming</dt><dd className={contentBlock}>{item.incoming}</dd></div>
+        </dl>
+        <ChoiceField label={"Value for " + item.field} value={chosen.get(choiceKey(item)) ?? ""} placeholder="Choose a value"
           options={[{value:"current",label:"Current"},{value:"incoming",label:"Incoming"}]} onChange={(value) => {
             setChosen((old) => {
               const next = new Map(old);
-              if (value) next.set(item.id,value); else next.delete(item.id);
+              if (value) next.set(choiceKey(item),value); else next.delete(choiceKey(item));
               return next;
             });
           }} />

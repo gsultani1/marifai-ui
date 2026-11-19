@@ -17,8 +17,9 @@ export function TaskProgressRollup({ tasks, onOpenGroup, className }: TaskProgre
     <dl className="grid gap-2 text-sm sm:grid-cols-3">
       {([{id:"completed",label:"Completed"},{id:"blocked",label:"Blocked"},{id:"remaining",label:"Remaining"}] as const).map((group) => {
         const ids = tasks.filter((item) => item.status === group.id).map((item) => item.id);
-        return <div key={group.id} className="space-y-1"><dt>{group.label}</dt><dd className="tabular-nums">{ids.length}</dd>
-          <ControlAction label={"View " + group.id} disabled={!ids.length} onClick={onOpenGroup && (() => onOpenGroup(group.id,ids))} /></div>;
+        return <div key={group.id} className="space-y-1"><dt>{group.label}</dt>
+          <dd className="flex flex-wrap items-center gap-2"><span className="tabular-nums">{ids.length}</span>
+            <ControlAction label={"View " + group.id} disabled={!ids.length} onClick={onOpenGroup && (() => onOpenGroup(group.id,ids))} /></dd></div>;
       })}
     </dl>
   </ControlPanel>;

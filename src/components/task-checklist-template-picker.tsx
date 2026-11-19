@@ -14,12 +14,21 @@ export interface TaskChecklistTemplatePickerProps {
 
 export function TaskChecklistTemplatePicker({ templates, onApply, className }: TaskChecklistTemplatePickerProps) {
   const [id,setId] = useState("");
+  const [applied, setApplied] = useState("");
   const template = templates.find((item) => item.id === id);
   return <ControlPanel slot="task-checklist-template-picker" title="Checklist templates" className={className}>
-    <AsyncForm label="Apply checklist template" submitLabel="Apply checklist" disabled={!template} onSubmit={() => { if (template) return onApply(template.id); }}>
+    {templates.length ? <AsyncForm label="Apply checklist template" submitLabel="Apply checklist"
+      validate={() => template ? undefined : "Choose a template."}
+      onSubmit={async () => {
+        if (!template) return;
+        await onApply(template.id);
+        setId("");
+        setApplied("Applied the " + template.title + " checklist.");
+      }}>
       <ChoiceField label="Template" value={template?.id ?? ""} placeholder="Choose a template"
-        options={templates.map((item) => ({value:item.id,label:item.title}))} onChange={setId} />
-      {template && <ol className="list-decimal ps-5 text-sm">{template.steps.map((step,index) => <li key={index}>{step}</li>)}</ol>}
-    </AsyncForm>
+        options={templates.map((item) => ({value:item.id,label:item.title}))} onChange={(next) => { setId(next); setApplied(""); }} />
+      {template && <ol aria-label={template.title + " steps"} className="list-decimal ps-5 text-sm">{template.steps.map((step,index) => <li key={index}>{step}</li>)}</ol>}
+    </AsyncForm> : <p className="text-sm text-muted-foreground">No checklist templates.</p>}
+    <p role="status" className="text-sm">{applied}</p>
   </ControlPanel>;
 }

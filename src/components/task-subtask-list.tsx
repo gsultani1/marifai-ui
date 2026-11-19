@@ -24,7 +24,8 @@ export function TaskSubtaskList({ subtasks, onAdd, onCompleteChange, pendingIds 
       ? <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={item.complete} disabled={pendingIds.includes(item.id)}
         onChange={(event) => onCompleteChange(item.id, event.currentTarget.checked)} />{item.title}</label>
       : <p className="text-sm">{item.title} · {item.complete ? "Complete" : "Open"}</p>} />
-    {onAdd && <AsyncForm label="Add subtask" submitLabel="Add subtask" disabled={!title.trim()}
+    {/* Validate rather than disable, so the submit button keeps focus after the name clears. */}
+    {onAdd && <AsyncForm label="Add subtask" submitLabel="Add subtask" validate={() => title.trim() ? undefined : "Enter a subtask name."}
       onSubmit={async () => { await onAdd(title.trim()); setTitle(""); }}>
       <Field label="Subtask name"><input className={fieldClass} value={title} onChange={(event) => setTitle(event.currentTarget.value)} /></Field>
     </AsyncForm>}

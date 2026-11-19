@@ -25,24 +25,33 @@ const fieldClass = cn("block h-8 w-full rounded-md border border-input bg-backgr
 export function TaskQuickAdd({ onAdd, className }: TaskQuickAddProps) {
   const id = useId();
   const inFlight = useRef(false);
+  const titleInput = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [busy, setBusy] = useState(false);
-  const [feedback, setFeedback] = useState<"added" | "error" | null>(null);
+  const [added, setAdded] = useState(false);
+  const [error, setError] = useState("");
+
+  function clearFeedback() {
+    setAdded(false);
+    setError("");
+  }
 
   async function add() {
     const trimmed = title.trim();
     if (!trimmed || inFlight.current) return;
     inFlight.current = true;
     setBusy(true);
-    setFeedback(null);
+    clearFeedback();
     try {
       await onAdd(dueDate ? { title: trimmed, dueDate } : { title: trimmed });
       setTitle("");
       setDueDate("");
-      setFeedback("added");
-    } catch {
-      setFeedback("error");
+      setAdded(true);
+      // The submit button disables once the title clears; keep focus ready for the next task.
+      titleInput.current?.focus();
+    } catch (reason) {
+      setError(reason instanceof Error && reason.message ? reason.message : "Couldn’t add task. Try again.");
     } finally {
       inFlight.current = false;
       setBusy(false);
@@ -58,21 +67,21 @@ export function TaskQuickAdd({ onAdd, className }: TaskQuickAddProps) {
     >
       <label className="block space-y-1 text-xs font-medium" htmlFor={id}>
         <span>Task title</span>
-        <input id={id} className={fieldClass} required value={title} readOnly={busy}
-          onChange={(event) => { setTitle(event.currentTarget.value); setFeedback(null); }} />
+        <input ref={titleInput} id={id} className={fieldClass} required value={title} readOnly={busy}
+          onChange={(event) => { setTitle(event.currentTarget.value); clearFeedback(); }} />
       </label>
       <div className="flex flex-wrap items-end gap-2">
         <label className="min-w-0 flex-1 space-y-1 text-xs font-medium" htmlFor={id + "-due"}>
           <span>Due date (optional)</span>
           <input id={id + "-due"} type="date" className={fieldClass} value={dueDate} readOnly={busy}
-            onChange={(event) => { setDueDate(event.currentTarget.value); setFeedback(null); }} />
+            onChange={(event) => { setDueDate(event.currentTarget.value); clearFeedback(); }} />
         </label>
         <Button type="submit" size="sm" loading={busy} disabled={!title.trim()}><PlusIcon aria-hidden="true" /> Add task</Button>
       </div>
       <div role="status" className="text-xs text-muted-foreground">
-        {feedback === "added" && "Task added."}
+        {added && "Task added."}
       </div>
-      {feedback === "error" && <p role="alert" className="text-xs text-destructive">Couldn’t add task. Try again.</p>}
+      {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
     </form>
   );
 }
