@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { DiffView } from "../src/index.js";
+import { wallClockTime } from "../src/lib/dates.js";
 import { FilteredList, LabeledTree, OrderedList } from "../src/lib/collection-controls.js";
 import {
   AsyncForm,
@@ -329,6 +330,17 @@ describe("LabeledTree", () => {
     const active = screen.getByRole("treeitem", { name: /Global/ });
     fireEvent.keyDown(active, { key: "Enter" });
     expect(onSelect).toHaveBeenCalledWith("global");
+  });
+});
+
+describe("wallClockTime", () => {
+  it("orders local date-times by wall clock, with or without seconds, and rejects invalid ones", () => {
+    expect(wallClockTime("2026-03-08T08:00")).toBe(wallClockTime("2026-03-08T08:00:00"));
+    expect(wallClockTime("2026-03-08T02:30")).toBeLessThan(wallClockTime("2026-03-08T03:00"));
+    expect(wallClockTime("2026-03-08T02:30:15.5")).toBe(wallClockTime("2026-03-08T02:30") + 15_500);
+    expect(wallClockTime("2026-02-30T10:00")).toBeNaN();
+    expect(wallClockTime("2026-03-08T24:00")).toBeNaN();
+    expect(wallClockTime("2026-03-08 10:00")).toBeNaN();
   });
 });
 

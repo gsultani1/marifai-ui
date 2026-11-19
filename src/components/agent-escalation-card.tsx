@@ -25,8 +25,10 @@ export function AgentEscalationCard({ escalationId, title, description, decision
     <AsyncForm key={escalationId} label="Agent escalation decision" submitLabel="Submit decision"
       disabled={!selected || Boolean(selected.unavailableReason)} onSubmit={async () => {
         if (!selected) return;
-        await onDecide(escalationId,selected.id);
-        setChoice(undefined);
+        const decided = { escalationId, id: selected.id };
+        await onDecide(decided.escalationId, decided.id);
+        // A newer escalation may have arrived and been answered while this one was pending; keep that choice.
+        setChoice((current) => current?.escalationId === decided.escalationId && current.id === decided.id ? undefined : current);
       }}>
       <ChoiceField label="Decision" value={selected?.id ?? ""} placeholder="Choose a decision"
         options={decisions.map((item) => ({value:item.id,label:item.label,disabled:Boolean(item.unavailableReason)}))}

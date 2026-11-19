@@ -281,7 +281,29 @@ describe("AutomationOccurrencePreview", () => {
   });
 });
 
+/** Runs `run` with the process in another time zone; Node applies TZ changes immediately. */
+async function inTimeZone(zone: string, run: () => Promise<void>) {
+  const env = (globalThis as unknown as { process: { env: Record<string, string | undefined> } }).process.env;
+  const previous = env.TZ;
+  env.TZ = zone;
+  try {
+    await run();
+  } finally {
+    if (previous === undefined) delete env.TZ;
+    else env.TZ = previous;
+  }
+}
+
 describe("AutomationPauseWindowEditor", () => {
+  it("orders the pause by wall-clock time, even inside the browser's daylight-saving gap", async () => {
+    await inTimeZone("America/New_York", async () => {
+      const onSubmit = vi.fn();
+      render(<AutomationPauseWindowEditor initialValue={{ start: "2026-03-08T02:30", end: "2026-03-08T03:00" }} onSubmit={onSubmit} />);
+      await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Save pause window" })); });
+      expect(onSubmit).toHaveBeenCalledWith({ start: "2026-03-08T02:30", end: "2026-03-08T03:00" });
+    });
+  });
+
   function field(name: string) {
     return screen.getByLabelText(name) as HTMLInputElement;
   }

@@ -638,7 +638,30 @@ describe("TaskSubtaskList", () => {
   });
 });
 
+/** Runs `run` with the process in another time zone; Node applies TZ changes immediately. */
+async function inTimeZone(zone: string, run: () => Promise<void>) {
+  const env = (globalThis as unknown as { process: { env: Record<string, string | undefined> } }).process.env;
+  const previous = env.TZ;
+  env.TZ = zone;
+  try {
+    await run();
+  } finally {
+    if (previous === undefined) delete env.TZ;
+    else env.TZ = previous;
+  }
+}
+
 describe("TaskTimeBlockEditor", () => {
+  it("accepts a block inside the browser's daylight-saving gap when it belongs to another zone", async () => {
+    await inTimeZone("America/New_York", async () => {
+      const onSubmit = vi.fn();
+      render(<TaskTimeBlockEditor initialValue={{ start: "2026-03-08T02:30", end: "2026-03-08T03:00", timeZone: "UTC" }} timeZones={["UTC"]} onSubmit={onSubmit} />);
+      await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Save time block" })); });
+      expect(screen.queryByRole("alert")).toBeNull();
+      expect(onSubmit).toHaveBeenCalledWith({ start: "2026-03-08T02:30", end: "2026-03-08T03:00", timeZone: "UTC" });
+    });
+  });
+
   const zones = ["America/Chicago", "America/New_York"];
 
   it("saves the initial block and an edited one", async () => {

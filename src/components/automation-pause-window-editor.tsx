@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { AsyncForm, ControlPanel, Field, fieldClass } from "../lib/component-controls.js";
+import { wallClockTime } from "../lib/dates.js";
 
 export interface AutomationPauseWindow { start: string; end: string }
 
@@ -18,8 +19,8 @@ export function AutomationPauseWindowEditor({ initialValue, onSubmit, className 
   return <ControlPanel slot="automation-pause-window-editor" title="Automation pause window" className={className}>
     <AsyncForm label="Pause interval" submitLabel="Save pause window" onSubmit={() => {
       if (!start || !end) throw new Error("Choose when the pause starts and ends.");
-      const from = Date.parse(start);
-      const to = Date.parse(end);
+      const from = wallClockTime(start);
+      const to = wallClockTime(end);
       if (!Number.isFinite(from) || !Number.isFinite(to)) throw new Error("Enter a valid start and end.");
       if (to <= from) throw new Error("Choose an end after the start.");
       return onSubmit({ start, end });

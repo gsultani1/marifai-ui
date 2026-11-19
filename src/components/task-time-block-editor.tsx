@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { AsyncForm, ChoiceField, ControlPanel, Field, fieldClass } from "../lib/component-controls.js";
+import { wallClockTime } from "../lib/dates.js";
 
 export interface TaskTimeBlock { start: string; end: string; timeZone: string }
 
@@ -20,9 +21,9 @@ export function TaskTimeBlockEditor({ initialValue, timeZones, onSubmit, classNa
   return <ControlPanel slot="task-time-block-editor" title="Task time block" className={className}>
     <AsyncForm label="Task time block" submitLabel="Save time block" onSubmit={() => {
       if (!start || !end) throw new Error("Choose a start and an end.");
-      // Compare as times, not strings: values may differ in whether they include seconds.
-      const from = Date.parse(start);
-      const to = Date.parse(end);
+      // Compare as wall-clock times: values may differ in seconds, and the browser's time zone must not shift them.
+      const from = wallClockTime(start);
+      const to = wallClockTime(end);
       if (Number.isNaN(from) || Number.isNaN(to)) throw new Error("Enter a valid start and end.");
       if (to <= from) throw new Error("Choose an end after the start.");
       if (!timeZones.includes(zone)) throw new Error("Choose an available time zone.");

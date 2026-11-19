@@ -109,6 +109,21 @@ describe("AgentEscalationCard", () => {
     { id: "handoff", label: "Hand off to a person", effect: "Assigns the run to support", unavailableReason: "No one is on call" },
   ];
 
+  it("keeps a choice made for a newer escalation while the previous decision is still pending", async () => {
+    let finish: () => void = () => undefined;
+    const onDecide = vi.fn(() => new Promise<void>((resolve) => { finish = resolve; }));
+    const card = (escalationId: string) => <AgentEscalationCard escalationId={escalationId} title="Budget limit reached" description="The research run used its $50 budget." decisions={decisions} onDecide={onDecide} />;
+    const { rerender } = render(card("esc-1"));
+    fireEvent.change(screen.getByRole("combobox", { name: "Decision" }), { target: { value: "extend" } });
+    fireEvent.click(screen.getByRole("button", { name: "Submit decision" }));
+    expect(onDecide).toHaveBeenCalledWith("esc-1", "extend");
+    rerender(card("esc-2"));
+    fireEvent.change(screen.getByRole("combobox", { name: "Decision" }), { target: { value: "stop" } });
+    await act(async () => finish());
+    expect((screen.getByRole("combobox", { name: "Decision" }) as HTMLSelectElement).value).toBe("stop");
+    expect(isDisabled(screen.getByRole("button", { name: "Submit decision" }))).toBe(false);
+  });
+
   it("lists each decision with its effect and keeps submit disabled until an available decision is chosen", () => {
     render(<AgentEscalationCard escalationId="esc-1" title="Budget limit reached" description="The research run used its $50 budget."
       decisions={decisions} onDecide={vi.fn()} />);
