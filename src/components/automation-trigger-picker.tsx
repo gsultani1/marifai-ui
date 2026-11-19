@@ -12,12 +12,16 @@ export interface AutomationTriggerPickerProps {
   className?: string;
 }
 
+const kindLabels = { manual: "Manual", scheduled: "Scheduled", event: "Event" } as const;
+
 export function AutomationTriggerPicker({ triggers, value, onChange, className }: AutomationTriggerPickerProps) {
   const selected = triggers.find((item) => item.id === value);
   return <ControlPanel slot="automation-trigger-picker" title="Automation trigger" className={className}>
-    <ChoiceField label="Trigger" value={selected?.id ?? ""} placeholder="Choose a trigger"
-      options={triggers.map((item) => ({ value: item.id, label: item.label + " · " + item.kind }))}
-      onChange={(id) => { if (id) onChange(id); }} />
-    {selected?.description && <p className="text-sm break-words">{selected.description}</p>}
+    <div>
+      <ChoiceField label="Trigger" value={selected?.id ?? ""} placeholder="Choose a trigger"
+        options={triggers.map((item) => ({ value: item.id, label: item.label + " · " + kindLabels[item.kind] }))}
+        onChange={(id) => { if (id) onChange(id); }} />
+      <div aria-live="polite">{selected?.description && <p className="mt-3 text-sm break-words">{selected.description}</p>}</div>
+    </div>
   </ControlPanel>;
 }

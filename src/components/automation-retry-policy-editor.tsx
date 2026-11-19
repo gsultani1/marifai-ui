@@ -18,7 +18,7 @@ export function AutomationRetryPolicyEditor({ initialValue, onSubmit, className 
   const [mode, setMode] = useState(initialValue.mode);
   return <ControlPanel slot="automation-retry-policy-editor" title="Automation retry policy" className={className}>
     <AsyncForm label="Automation retry policy" submitLabel="Save retry policy" onSubmit={() => onSubmit({
-      attempts: requiredNumber(attempts, "Maximum attempts", 1, true), delaySeconds: requiredNumber(delay, "Delay", 0, true), mode,
+      attempts: requiredNumber(attempts, "Maximum attempts", 1, true), delaySeconds: requiredNumber(delay, "Delay in seconds", 0, true), mode,
     })}>
       <Field label="Maximum attempts"><input className={fieldClass} inputMode="numeric" value={attempts} onChange={(event) => setAttempts(event.currentTarget.value)} /></Field>
       <ChoiceField label="Delay policy" value={mode} options={[{ value: "fixed", label: "Fixed" }, { value: "exponential", label: "Exponential" }]}

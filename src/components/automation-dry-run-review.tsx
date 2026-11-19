@@ -18,7 +18,7 @@ export function AutomationDryRunReview({ actions, onReviewApproval, className }:
         {item.requiresApproval && <ControlAction label="Review approval" item={item.title} onClick={onReviewApproval && (() => onReviewApproval(item.id))} />}
       </ItemHeading>
       {item.requiresApproval && <p className="text-sm text-muted-foreground">Approval required</p>}
-      {item.affectedItems.length > 0 && <ul aria-label="Affected items" className="list-disc ps-5 text-sm">
+      {item.affectedItems.length > 0 && <ul aria-label={"Items affected by " + item.title} className="list-disc ps-5 text-sm">
         {item.affectedItems.map((target, index) => <li key={index} className="break-words">{target}</li>)}
       </ul>}
     </>} />

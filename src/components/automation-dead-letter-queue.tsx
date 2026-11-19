@@ -17,9 +17,12 @@ export function AutomationDeadLetterQueue({ deliveries, onInspect, onRetry, pend
   return <ControlPanel slot="automation-dead-letter-queue" title="Failed deliveries" className={className}>
     <FilteredList items={deliveries} searchLabel="Search deliveries" searchText={(item) => [item.title,item.reason]}
       filterLabel="Delivery type" filters={[...new Set(deliveries.map((item) => item.kind))].map((value) => ({value,label:value}))} category={(item) => item.kind}
-      empty="No matching failures." render={(item) => <ItemHeading title={item.title} detail={[item.timestamp,item.reason,item.retryUnavailableReason].filter(Boolean).join(" · ")}>
-        <ControlAction label="Inspect" item={item.title} onClick={() => onInspect(item.id)} />
-        <ControlAction label="Retry" item={item.title} disabled={pendingIds.includes(item.id) || Boolean(item.retryUnavailableReason)} onClick={onRetry && (() => onRetry(item.id))} />
-      </ItemHeading>} />
+      empty={deliveries.length ? "No matching failures." : "No failed deliveries."} render={(item) => {
+        const pending = pendingIds.includes(item.id);
+        return <ItemHeading title={item.title} detail={[item.timestamp,item.reason,item.retryUnavailableReason,pending && "Retrying"].filter(Boolean).join(" · ")}>
+          <ControlAction label="Inspect" item={item.title} onClick={() => onInspect(item.id)} />
+          <ControlAction label="Retry" item={item.title} disabled={pending || Boolean(item.retryUnavailableReason)} onClick={onRetry && (() => onRetry(item.id))} />
+        </ItemHeading>;
+      }} />
   </ControlPanel>;
 }

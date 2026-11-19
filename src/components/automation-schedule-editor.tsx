@@ -54,7 +54,7 @@ export function AutomationScheduleEditor({ initialValue, timeZones, nextRun, onD
         {weekdays.map((label, day) => <label key={label} className="text-sm"><input type="checkbox" checked={value.weekdays.includes(day)}
           onChange={(event) => edit({ weekdays: event.currentTarget.checked ? [...value.weekdays, day] : value.weekdays.filter((item) => item !== day) })} /> {label}</label>)}
       </fieldset>}
-      {nextRun && <p role="status" className="text-sm">Next run · {nextRun}</p>}
+      <p role="status" className="text-sm">{nextRun && "Next run · " + nextRun}</p>
     </AsyncForm>
   </ControlPanel>;
 }

@@ -14,10 +14,13 @@ export interface AutomationToggleListProps {
 
 export function AutomationToggleList({ automations, onToggle, pendingIds = [], className }: AutomationToggleListProps) {
   return <ControlPanel slot="automation-toggle-list" title="Automations" className={className}>
-    <ItemList items={automations} empty="No automations." render={(item) => <ItemHeading title={item.title}
-      detail={[item.enabled ? "Enabled" : "Disabled", item.nextRun, item.unavailableReason].filter(Boolean).join(" · ")}>
-      {onToggle && <label className="text-sm"><input type="checkbox" role="switch" aria-label={item.title} checked={item.enabled}
-        disabled={Boolean(item.unavailableReason) || pendingIds.includes(item.id)} onChange={(event) => onToggle(item.id, event.currentTarget.checked)} /> Enabled</label>}
-    </ItemHeading>} />
+    <ItemList items={automations} empty="No automations." render={(item) => {
+      const pending = pendingIds.includes(item.id);
+      return <ItemHeading title={item.title}
+        detail={[item.enabled ? "Enabled" : "Disabled", item.nextRun, item.unavailableReason, pending && "Updating"].filter(Boolean).join(" · ")}>
+        {onToggle && <label className="text-sm"><input type="checkbox" role="switch" aria-label={"Enabled " + item.title} checked={item.enabled}
+          disabled={Boolean(item.unavailableReason) || pending} onChange={(event) => onToggle(item.id, event.currentTarget.checked)} /> Enabled</label>}
+      </ItemHeading>;
+    }} />
   </ControlPanel>;
 }

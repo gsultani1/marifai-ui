@@ -12,8 +12,10 @@ export interface AutomationExecutionWindowIndicatorProps {
 
 export function AutomationExecutionWindowIndicator({ window, className }: AutomationExecutionWindowIndicatorProps) {
   return <ControlPanel slot="automation-execution-window-indicator" title="Execution window" className={className}>
-    <p role="status" className="text-sm font-medium">{window.eligible ? "Eligible now" : "Outside execution window"}</p>
-    {window.reason && <p className="text-sm break-words">{window.reason}</p>}
-    {!window.eligible && window.nextEligibleAt && <p className="text-sm text-muted-foreground">Next eligible · {window.nextEligibleAt}</p>}
+    <div role="status" className="space-y-1">
+      <p className="text-sm font-medium">{window.eligible ? "Eligible now" : "Outside execution window"}</p>
+      {window.reason && <p className="text-sm break-words">{window.reason}</p>}
+      {!window.eligible && window.nextEligibleAt && <p className="text-sm text-muted-foreground">Next eligible · {window.nextEligibleAt}</p>}
+    </div>
   </ControlPanel>;
 }
