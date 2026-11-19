@@ -14,7 +14,7 @@ npm install @sultanico/ai-ui
 
 You can also install from an npm tarball or a local checkout of the package.
 
-As source, shadcn style: copy `src/` into your app (for example `src/components/ai-ui/`) and install the runtime dependencies listed under `dependencies` in `package.json`. All internal imports are relative, so the folder works wherever it lands. Import the preset from its new location. The package also exposes `@sultanico/ai-ui/components/<name>` and `@sultanico/ai-ui/hooks/<name>` for single-component imports, and `@sultanico/ai-ui/source` for bundlers that compile TypeScript from dependencies.
+As source, shadcn style: copy `src/` into your app (for example `src/components/ai-ui/`) and install the runtime dependencies listed under `dependencies` in `package.json`. All internal imports are relative, so the folder works wherever it lands. Import the preset from its new location. The package also exposes `@sultanico/ai-ui/components/<name>` and `@sultanico/ai-ui/hooks/<name>` for single-component imports, `@sultanico/ai-ui/experimental` for [experimental components](#experimental-components), and `@sultanico/ai-ui/source` for bundlers that compile TypeScript from dependencies.
 
 ## Tailwind setup
 
@@ -744,6 +744,17 @@ useNotificationPolling((signal) => refreshNotifications(signal), { open });
 
 Interactive parts use Base UI (Accordion, AlertDialog, Avatar, Button, Checkbox, CheckboxGroup, Collapsible, Combobox, ContextMenu, Dialog, Drawer, Field, Fieldset, Input, Menu, Menubar, Meter, NavigationMenu, NumberField, OTPField, Popover, PreviewCard, Progress, RadioGroup, ScrollArea, Select, Separator, Slider, Switch, Tabs, Toggle, ToggleGroup, Toolbar, Tooltip) or native elements with explicit ARIA, every icon-only control has an accessible name, and animations respect `prefers-reduced-motion`. Motion is not a dependency: collapsibles animate with Base UI's CSS variables and nothing else needed physics.
 
+## Experimental components
+
+A further 129 components ship under a separate entry point because they are not yet covered by tests, examples or documentation. They cover agent inboxes and run inspection, assistant planning and scheduling, automation editors, browser panels, chat moderation, debugger and git panels, task management and tool administration. Their names, props and behavior can change in any release, including patch releases.
+
+```tsx
+import { TaskQuickAdd } from "@sultanico/ai-ui/experimental";
+import { TaskQuickAdd as DirectTaskQuickAdd } from "@sultanico/ai-ui/experimental/task-quick-add";
+```
+
+The full list is in `src/experimental/index.ts` and under the Experimental filter in the [documentation catalog](https://ui.marifai.com/#components). They are not exported from `@sultanico/ai-ui` or `@sultanico/ai-ui/components/<name>`. A component moves to the main entry point once it has tests and a documented example.
+
 ## Development
 
 ```sh
@@ -755,3 +766,7 @@ npm run test:browser                          # needs a Playwright Chromium
 ```
 
 `check:css` compiles the preset with the Tailwind v4 CLI, with automatic source detection off, to prove the preset alone finds the component classes. `check:package` installs the packed tarball into a fresh project, typechecks the public API with negative type tests, renders every component on the server, compiles a copied `src/` and builds the installed preset. `test:browser` builds the playground and drives the chat page, the workbench and every gallery section in Chromium with the keyboard and pointer (streaming follow and release, clipboard, lazy editors, full-screen popups, sandbox isolation, the compiled React and project previews, terminals and notebooks, the element inspector and region capture, model and usage settings, knowledge and evidence, the agent graph and notifications, nested menus, dialogs, comboboxes, the virtual list, the carousel and the site header's mobile menu among them), with axe WCAG 2.1 AA scans in light, dark and mobile layouts; screenshots and reports land in `.browser-artifacts/`. Region capture is exercised with Chromium's `--auto-accept-this-tab-capture` switch.
+
+## License
+
+[MIT](LICENSE) © 2026 Sultani Investments, LLC. Icon paths embedded in `src/lib/rich-text/html-media.ts` come from Lucide (ISC) and Feather (MIT) and keep their notices in that file.
