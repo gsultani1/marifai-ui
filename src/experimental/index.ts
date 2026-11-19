@@ -1,10 +1,9 @@
 // packages/ai-ui/src/experimental/index.ts
 /**
- * Experimental components: exported for early use, but not yet covered by
- * tests, examples or documentation. Their names, props and behavior can change
- * in any release, including patch releases. Import them from
- * "@sultanico/ai-ui/experimental" or "@sultanico/ai-ui/experimental/<name>".
- * A component moves to the main entry point once it is tested and documented.
+ * @deprecated Compatibility alias for 0.4.0-dev.4, which briefly exported these
+ * components from "@sultanico/ai-ui/experimental". They are stable and exported
+ * from "@sultanico/ai-ui" and "@sultanico/ai-ui/components/<name>"; import them
+ * from there. This entry point will be removed in a later release.
  */
 export { type AssistantTriageAction, type AssistantInboxItem, type AssistantInboxTriageProps, AssistantInboxTriage } from "../components/assistant-inbox-triage.js";
 export { type MeetingPrepMaterial, type MeetingPreparation, type MeetingPrepCardProps, MeetingPrepCard } from "../components/meeting-prep-card.js";

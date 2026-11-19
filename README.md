@@ -14,7 +14,7 @@ npm install @sultanico/ai-ui
 
 You can also install from an npm tarball or a local checkout of the package.
 
-As source, shadcn style: copy `src/` into your app (for example `src/components/ai-ui/`) and install the runtime dependencies listed under `dependencies` in `package.json`. All internal imports are relative, so the folder works wherever it lands. Import the preset from its new location. The package also exposes `@sultanico/ai-ui/components/<name>` and `@sultanico/ai-ui/hooks/<name>` for single-component imports, `@sultanico/ai-ui/experimental` for [experimental components](#experimental-components), and `@sultanico/ai-ui/source` for bundlers that compile TypeScript from dependencies.
+As source, shadcn style: copy `src/` into your app (for example `src/components/ai-ui/`) and install the runtime dependencies listed under `dependencies` in `package.json`. All internal imports are relative, so the folder works wherever it lands. Import the preset from its new location. The package also exposes `@sultanico/ai-ui/components/<name>` and `@sultanico/ai-ui/hooks/<name>` for single-component imports, and `@sultanico/ai-ui/source` for bundlers that compile TypeScript from dependencies.
 
 ## Tailwind setup
 
@@ -744,16 +744,7 @@ useNotificationPolling((signal) => refreshNotifications(signal), { open });
 
 Interactive parts use Base UI (Accordion, AlertDialog, Avatar, Button, Checkbox, CheckboxGroup, Collapsible, Combobox, ContextMenu, Dialog, Drawer, Field, Fieldset, Input, Menu, Menubar, Meter, NavigationMenu, NumberField, OTPField, Popover, PreviewCard, Progress, RadioGroup, ScrollArea, Select, Separator, Slider, Switch, Tabs, Toggle, ToggleGroup, Toolbar, Tooltip) or native elements with explicit ARIA, every icon-only control has an accessible name, and animations respect `prefers-reduced-motion`. Motion is not a dependency: collapsibles animate with Base UI's CSS variables and nothing else needed physics.
 
-## Experimental components
-
-A further 129 components ship under a separate entry point because they are not yet covered by tests, examples or documentation. They cover agent inboxes and run inspection, assistant planning and scheduling, automation editors, browser panels, chat moderation, debugger and git panels, task management and tool administration. Their names, props and behavior can change in any release, including patch releases.
-
-```tsx
-import { TaskQuickAdd } from "@sultanico/ai-ui/experimental";
-import { TaskQuickAdd as DirectTaskQuickAdd } from "@sultanico/ai-ui/experimental/task-quick-add";
-```
-
-The full list is in `src/experimental/index.ts` and under the Experimental filter in the [documentation catalog](https://ui.marifai.com/#components). They are not exported from `@sultanico/ai-ui` or `@sultanico/ai-ui/components/<name>`. A component moves to the main entry point once it has tests and a documented example.
+0.4.0-dev.4 briefly exported 129 of these components from `@sultanico/ai-ui/experimental`. They are now stable and exported from the main entry point; `@sultanico/ai-ui/experimental` and `@sultanico/ai-ui/experimental/<name>` still resolve to the same modules but are deprecated and will be removed in a later release.
 
 ## Development
 
