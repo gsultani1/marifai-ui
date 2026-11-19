@@ -31,6 +31,7 @@ export function SearchField({ label, value, onChange }: { label: string; value: 
 
 export function matchesQuery(query: string, ...values: Array<string | undefined>) {
   const needle = query.trim().toLocaleLowerCase();
+  if (!needle) return true;
   return values.some((value) => value?.toLocaleLowerCase().includes(needle));
 }
 
