@@ -30,7 +30,7 @@ import {
 } from "../../src/index.js";
 import { Demo, GallerySection } from "./section.js";
 
-const GRID = "grid w-full items-start gap-3 md:grid-cols-2 xl:grid-cols-3";
+const GRID = "grid w-full grid-cols-1 items-start gap-3 md:grid-cols-2 xl:grid-cols-3";
 
 const BRIEFING = {
   agenda: [

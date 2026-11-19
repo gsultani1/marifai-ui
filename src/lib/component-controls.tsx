@@ -80,8 +80,11 @@ export function ChoiceField<T extends string>({ label, value, options, onChange,
   );
 }
 
-export function AsyncForm({ label, submitLabel, children, validate, onSubmit, disabled }: {
-  label: string; submitLabel: string; children: ReactNode; validate?: () => string | undefined;
+export function AsyncForm({ label, submitLabel, submitAriaLabel, children, validate, onSubmit, disabled }: {
+  label: string; submitLabel: string;
+  /** Fuller accessible name for the submit button, such as one naming the item; it should start with `submitLabel`. */
+  submitAriaLabel?: string | undefined;
+  children: ReactNode; validate?: () => string | undefined;
   onSubmit: () => void | Promise<void>; disabled?: boolean;
 }) {
   const active = useRef(false);
@@ -107,7 +110,7 @@ export function AsyncForm({ label, submitLabel, children, validate, onSubmit, di
     <form aria-label={label} className="space-y-2" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
       <fieldset disabled={busy} className="min-w-0 space-y-2">{children}</fieldset>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" size="sm" loading={busy} disabled={disabled} focusableWhenDisabled>{submitLabel}</Button>
+      <Button type="submit" size="sm" aria-label={submitAriaLabel} loading={busy} disabled={disabled} focusableWhenDisabled>{submitLabel}</Button>
     </form>
   );
 }

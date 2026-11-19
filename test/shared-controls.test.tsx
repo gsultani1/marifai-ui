@@ -144,6 +144,12 @@ describe("AsyncForm", () => {
     expect(screen.getByRole("alert").textContent).toBe("The scheduler is offline.");
   });
 
+  it("shows a short submit label while naming the item for assistive technology", () => {
+    render(<AsyncForm label="Review restock" submitLabel="Submit decision" submitAriaLabel="Submit decision for Ask for a freight quote" onSubmit={vi.fn()}>{null}</AsyncForm>);
+    const submit = screen.getByRole("button", { name: "Submit decision for Ask for a freight quote" });
+    expect(submit.textContent).toBe("Submit decision");
+  });
+
   it("keeps its submit button focusable when the form becomes disabled after a submit", () => {
     const { rerender } = render(<AsyncForm label="Feedback" submitLabel="Send feedback" onSubmit={vi.fn()}>{null}</AsyncForm>);
     const submit = screen.getByRole("button", { name: "Send feedback" }) as HTMLButtonElement;

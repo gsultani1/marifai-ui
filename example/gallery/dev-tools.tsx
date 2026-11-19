@@ -42,7 +42,7 @@ import {
 } from "../../src/index.js";
 import { Demo, GallerySection } from "./section.js";
 
-const GRID = "grid w-full items-start gap-3 sm:grid-cols-2 lg:grid-cols-3";
+const GRID = "grid w-full grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3";
 const NOTE = "text-xs text-muted-foreground break-words";
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 const at = (location: EditorSourceLocation) => location.file + ":" + location.line + (location.column === undefined ? "" : ":" + location.column);

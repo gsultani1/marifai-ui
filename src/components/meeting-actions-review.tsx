@@ -14,7 +14,7 @@ export interface MeetingActionsReviewProps {
 function ActionReview({ item, onDecide }: { item: MeetingActionSuggestion; onDecide: MeetingActionsReviewProps["onDecide"] }) {
   const [title,setTitle] = useState(item.title);
   const [decision,setDecision] = useState<MeetingActionDecision>("accept");
-  return <AsyncForm label={"Review " + item.title} submitLabel={"Submit decision for " + item.title} onSubmit={() => {
+  return <AsyncForm label={"Review " + item.title} submitLabel="Submit decision" submitAriaLabel={"Submit decision for " + item.title} onSubmit={() => {
     if (decision === "accept" && !title.trim()) throw new Error("Enter an action title.");
     return onDecide(item.id,decision,title.trim());
   }}>
