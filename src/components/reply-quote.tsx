@@ -15,13 +15,14 @@ export interface ReplyQuoteProps {
 
 export function ReplyQuote({ messageId, author, quote, onOpen, onClear, className }: ReplyQuoteProps) {
   return <ControlPanel slot="reply-quote" title="Replying to" className={className}>
-    <blockquote className="border-s-2 border-border ps-2 text-sm break-words">
-      <p className="font-medium">{author}</p>
-      <p className="whitespace-pre-wrap">{quote}</p>
-    </blockquote>
-    <div className="flex flex-wrap gap-2">
+    {/* The attribution sits outside the blockquote so it is not read as part of the quoted text. */}
+    <figure className="border-s-2 border-border ps-2 text-sm break-words">
+      <figcaption className="font-medium">{author}</figcaption>
+      <blockquote className="whitespace-pre-wrap">{quote}</blockquote>
+    </figure>
+    {(onOpen || onClear) && <div className="flex flex-wrap gap-2">
       <ControlAction label="Open original message" onClick={onOpen && (() => onOpen(messageId))} />
       <ControlAction label="Clear quote" onClick={onClear} />
-    </div>
+    </div>}
   </ControlPanel>;
 }

@@ -18,11 +18,25 @@ export function CitationNavigator({ citations, activeId, onChange, onOpen, class
   const selected = citations[index];
   const previous = index > 0 ? citations[index - 1] : undefined;
   const next = citations[index + 1];
+  if (!citations.length) {
+    return <ControlPanel slot="citation-navigator" title="Citations" className={className}>
+      <p className="text-sm text-muted-foreground">No citations.</p>
+    </ControlPanel>;
+  }
   return <ControlPanel slot="citation-navigator" title="Citations" className={className}>
-    <ChoiceField label="Citation" value={selected?.id ?? ""} placeholder="Choose a citation"
+    {/* A citation cannot be cleared, so the prompt is offered only until one is chosen. */}
+    <ChoiceField label="Citation" value={selected?.id ?? ""} {...(selected ? {} : { placeholder: "Choose a citation" })}
       options={citations.map((item) => ({ label: item.title, value: item.id }))}
       onChange={(id) => { if (id) onChange(id); }} />
-    {selected?.excerpt && <p className="text-sm break-words">{selected.excerpt}</p>}
+    {/* Previous and Next change the citation without moving focus, so the new position is announced. */}
+    <div aria-live="polite" className="space-y-1">
+      <p className="text-xs text-muted-foreground">
+        {selected
+          ? <>Citation {index + 1} of {citations.length}<span className="sr-only">: {selected.title}</span></>
+          : citations.length === 1 ? "1 citation" : citations.length + " citations"}
+      </p>
+      {selected?.excerpt && <p className="text-sm break-words">{selected.excerpt}</p>}
+    </div>
     <div className="flex flex-wrap gap-2">
       <ControlAction label="Previous citation" disabled={!previous} onClick={() => { if (previous) onChange(previous.id); }} />
       <ControlAction label="Next citation" disabled={!next} onClick={() => { if (next) onChange(next.id); }} />

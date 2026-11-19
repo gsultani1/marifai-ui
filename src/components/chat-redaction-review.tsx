@@ -25,7 +25,10 @@ export function ChatRedactionReview({ suggestions, initialAcceptedIds = [], onSu
             const checked=event.currentTarget.checked;
             setAccepted((old) => { const next = new Set(old); if (checked) next.add(item.id); else next.delete(item.id); return next; });
           }} /> Accept</label></ItemHeading>
-        <div className={comparisonGrid}><p className={contentBlock}>{item.before}</p><p className={contentBlock}>{item.after}</p></div>
+        <div className={comparisonGrid}>
+          <figure className="min-w-0 space-y-1"><figcaption className="text-xs font-medium text-muted-foreground">Original</figcaption><p className={contentBlock}>{item.before}</p></figure>
+          <figure className="min-w-0 space-y-1"><figcaption className="text-xs font-medium text-muted-foreground">Redacted</figcaption><p className={contentBlock}>{item.after}</p></figure>
+        </div>
       </>} />
     </AsyncForm>
   </ControlPanel>;

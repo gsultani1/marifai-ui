@@ -11,10 +11,13 @@ export interface ContextItemOrderEditorProps {
   className?: string;
 }
 
+const tokenUnit = (tokens: number) => (tokens === 1 ? "token" : "tokens");
+
 export function ContextItemOrderEditor({ items, onReorder, className }: ContextItemOrderEditorProps) {
+  const total = items.reduce((sum, item) => sum + (item.tokens ?? 0), 0);
   return <ControlPanel slot="context-item-order-editor" title="Context order" className={className}>
     <OrderedList items={items} label="Context items" itemLabel={(item) => item.title} onReorder={onReorder}
-      render={(item) => item.title + (item.tokens === undefined ? " · Estimate unavailable" : " · " + item.tokens + " tokens")} />
-    <p className="text-sm text-muted-foreground">{items.reduce((total,item) => total + (item.tokens ?? 0),0)} estimated tokens from known items</p>
+      render={(item) => item.title + (item.tokens === undefined ? " · Estimate unavailable" : " · " + item.tokens + " " + tokenUnit(item.tokens))} />
+    {items.length > 0 && <p className="text-sm text-muted-foreground">{total} estimated {tokenUnit(total)} from known items</p>}
   </ControlPanel>;
 }

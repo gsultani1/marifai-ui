@@ -14,6 +14,13 @@ export interface ConversationSummaryEditorProps {
 
 export function ConversationSummaryEditor({ initialSummary, sourceRange, onSubmit, className }: ConversationSummaryEditorProps) {
   const [summary, setSummary] = useState(initialSummary);
+  const [source, setSource] = useState({ initialSummary, sourceRange });
+  // A new summary or range starts a fresh draft, so an edit is never saved against the wrong messages.
+  // The draft is replaced in place rather than remounted so focus stays on Save after a successful save.
+  if (source.initialSummary !== initialSummary || source.sourceRange !== sourceRange) {
+    setSource({ initialSummary, sourceRange });
+    setSummary(initialSummary);
+  }
   return <ControlPanel slot="conversation-summary-editor" title="Conversation summary" className={className}>
     <p className="text-sm text-muted-foreground">{sourceRange}</p>
     <AsyncForm label="Conversation summary" submitLabel="Save summary" disabled={!summary.trim()} onSubmit={() => onSubmit(summary.trim())}>

@@ -14,6 +14,8 @@ export interface ConversationForkTreeProps {
 
 export function ConversationForkTree({ branches, activeId, onSelect, className }: ConversationForkTreeProps) {
   return <ControlPanel slot="conversation-fork-tree" title="Conversation forks" className={className}>
-    <LabeledTree items={branches} label="Forks" activeId={activeId} onSelect={onSelect} detail={(item) => item.origin} />
+    {branches.length
+      ? <LabeledTree items={branches} label="Forks" activeId={activeId} onSelect={onSelect} detail={(item) => item.origin} />
+      : <p className="text-sm text-muted-foreground">No forks yet.</p>}
   </ControlPanel>;
 }

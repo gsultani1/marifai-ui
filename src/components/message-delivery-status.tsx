@@ -15,7 +15,7 @@ export interface MessageDeliveryStatusProps {
 const labels: Record<ChatDeliveryState, string> = { queued: "Queued", sending: "Sending", sent: "Sent", failed: "Failed to send" };
 export function MessageDeliveryStatus({ status, detail, retrying, onRetry, className }: MessageDeliveryStatusProps) {
   return <span data-slot="message-delivery-status" className={cn("inline-flex flex-wrap items-center gap-2 text-xs text-muted-foreground", className)}>
-    <span role="status">{labels[status]}{detail && " · " + detail}</span>
+    <span role="status">{status === "failed" && retrying ? "Retrying" : labels[status]}{detail && " · " + detail}</span>
     {status === "failed" && <ControlAction label="Retry message" disabled={retrying} onClick={onRetry} />}
   </span>;
 }

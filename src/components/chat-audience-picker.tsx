@@ -15,9 +15,10 @@ export interface ChatAudiencePickerProps {
 export function ChatAudiencePicker({ audiences, value, onChange, className }: ChatAudiencePickerProps) {
   const audience = audiences.find((item) => item.id === value);
   return <ControlPanel slot="chat-audience-picker" title="Conversation audience" className={className}>
-    <ChoiceField label="Audience" value={audience?.id ?? ""} placeholder="Choose an audience"
+    {/* The audience cannot be cleared, so the prompt is offered only until one is chosen. */}
+    <ChoiceField label="Audience" value={audience?.id ?? ""} {...(audience ? {} : { placeholder: "Choose an audience" })}
       options={audiences.map((item) => ({ value:item.id,label:[item.title,item.unavailableReason].filter(Boolean).join(" · "),disabled:Boolean(item.unavailableReason) }))}
       onChange={(id) => { if (id) onChange(id); }} />
-    {audience && <p className="text-sm break-words">{audience.visibility}</p>}
+    <p aria-live="polite" className="text-sm break-words">{audience ? audience.visibility : "No audience chosen yet."}</p>
   </ControlPanel>;
 }

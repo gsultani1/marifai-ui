@@ -16,12 +16,15 @@ export interface ChatDraftSwitcherProps {
 export function ChatDraftSwitcher({ drafts, onOpen, onDiscard, pendingIds = [], className }: ChatDraftSwitcherProps) {
   return <ControlPanel slot="chat-draft-switcher" title="Chat drafts" className={className}>
     <FilteredList items={drafts} searchLabel="Search drafts" searchText={(draft) => [draft.title, draft.preview]}
-      empty="No saved drafts." render={(draft) => <>
-        <ItemHeading title={draft.title} detail={draft.updatedAt}>
-          <ControlAction label="Open" item={draft.title} onClick={() => onOpen(draft.id)} />
-          <ControlAction label="Discard" item={draft.title} disabled={pendingIds.includes(draft.id)} onClick={onDiscard && (() => onDiscard(draft.id))} />
-        </ItemHeading>
-        <p className="text-sm break-words">{draft.preview}</p>
-      </>} />
+      empty={drafts.length ? "No drafts match your search." : "No saved drafts."} render={(draft) => {
+        const pending = pendingIds.includes(draft.id);
+        return <>
+          <ItemHeading title={draft.title} detail={draft.updatedAt}>
+            <ControlAction label="Open" item={draft.title} disabled={pending} onClick={() => onOpen(draft.id)} />
+            <ControlAction label="Discard" item={draft.title} disabled={pending} onClick={onDiscard && (() => onDiscard(draft.id))} />
+          </ItemHeading>
+          <p className="text-sm break-words">{draft.preview}</p>
+        </>;
+      }} />
   </ControlPanel>;
 }
