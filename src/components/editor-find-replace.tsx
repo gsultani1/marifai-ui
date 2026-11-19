@@ -22,7 +22,9 @@ export function EditorFindReplace({ value, onChange, matches, onMove, onReplace,
       <label><input type="checkbox" checked={value.matchCase} onChange={(event) => onChange({ ...value, matchCase: event.currentTarget.checked })} /> Match case</label>
       <label><input type="checkbox" checked={value.wholeWord} onChange={(event) => onChange({ ...value, wholeWord: event.currentTarget.checked })} /> Whole word</label>
     </div>
-    <p role="status" className="text-sm text-muted-foreground">{pending ? "Searching…" : matches + " matches"}</p>
+    <p role="status" className="text-sm text-muted-foreground">
+      {pending ? "Searching…" : !value.query ? "Enter text to find." : matches === 1 ? "1 match" : matches + " matches"}
+    </p>
     <div className="flex flex-wrap gap-2">
       <ControlAction label="Previous match" disabled={disabled} onClick={() => onMove("previous")} />
       <ControlAction label="Next match" disabled={disabled} onClick={() => onMove("next")} />

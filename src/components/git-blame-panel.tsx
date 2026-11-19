@@ -15,10 +15,11 @@ export interface GitBlamePanelProps {
 export function GitBlamePanel({ file, ranges, onOpenCommit, className }: GitBlamePanelProps) {
   return <ControlPanel slot="git-blame-panel" title="Line attribution" className={className}>
     <p className="text-sm break-all">{file}</p>
-    <ItemList items={ranges} empty="No line attribution." render={(item) => <ItemHeading
-      title={item.startLine === item.endLine ? "Line " + item.startLine : "Lines " + item.startLine + "–" + item.endLine}
-      detail={[item.author,item.summary,item.commitId].filter(Boolean).join(" · ")}>
-      <ControlAction label="Open commit" item={item.id} onClick={() => onOpenCommit(item.commitId)} />
-    </ItemHeading>} />
+    <ItemList items={ranges} empty="No line attribution." render={(item) => {
+      const lines = item.startLine === item.endLine ? "Line " + item.startLine : "Lines " + item.startLine + "–" + item.endLine;
+      return <ItemHeading title={lines} detail={[item.author,item.summary,item.commitId].filter(Boolean).join(" · ")}>
+        <ControlAction label="Open commit" item={item.commitId + " for " + lines.toLowerCase()} onClick={() => onOpenCommit(item.commitId)} />
+      </ItemHeading>;
+    }} />
   </ControlPanel>;
 }

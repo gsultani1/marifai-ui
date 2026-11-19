@@ -18,17 +18,22 @@ export interface DebugWatchExpressionsProps {
 export function DebugWatchExpressions({ expressions, onSave, onRemove, onRefresh, pendingIds = [], className }: DebugWatchExpressionsProps) {
   const [editId,setEdit] = useState<string>();
   const [text,setText] = useState("");
+  // An expression removed while it was being edited drops the form back to adding a new one.
   const editing = expressions.find((item) => item.id === editId);
   return <ControlPanel slot="debug-watch-expressions" title="Watch expressions" className={className}>
-    <ItemList items={expressions} empty="No watch expressions." render={(item) => <ItemHeading title={item.expression} detail={item.error ?? item.value ?? "Not evaluated"}>
-      <ControlAction label="Edit" item={item.expression} disabled={pendingIds.includes(item.id)} onClick={() => { setEdit(item.id); setText(item.expression); }} />
-      <ControlAction label="Refresh" item={item.expression} disabled={pendingIds.includes(item.id)} onClick={onRefresh && (() => onRefresh(item.id))} />
-      <ControlAction label="Remove" item={item.expression} disabled={pendingIds.includes(item.id)} onClick={onRemove && (() => onRemove(item.id))} />
-    </ItemHeading>} />
-    <AsyncForm label="Watch expression" submitLabel={editing ? "Save expression" : "Add expression"} disabled={!text.trim() || Boolean(editId && !editing)}
-      onSubmit={async () => { await onSave(text.trim(),editId); setEdit(undefined); setText(""); }}>
+    <ItemList items={expressions} empty="No watch expressions." render={(item) => {
+      const busy = pendingIds.includes(item.id);
+      const result = item.error ? "Error: " + item.error : item.value ?? "Not evaluated";
+      return <ItemHeading title={item.expression} detail={busy ? result + " · Updating…" : result}>
+        <ControlAction label="Edit" item={item.expression} disabled={busy} onClick={() => { setEdit(item.id); setText(item.expression); }} />
+        <ControlAction label="Refresh" item={item.expression} disabled={busy} onClick={onRefresh && (() => onRefresh(item.id))} />
+        <ControlAction label="Remove" item={item.expression} disabled={busy} onClick={onRemove && (() => onRemove(item.id))} />
+      </ItemHeading>;
+    }} />
+    <AsyncForm label="Watch expression" submitLabel={editing ? "Save expression" : "Add expression"} disabled={!text.trim()}
+      onSubmit={async () => { await onSave(text.trim(),editing?.id); setEdit(undefined); setText(""); }}>
       <Field label="Expression"><input className={fieldClass} value={text} onChange={(event) => setText(event.currentTarget.value)} /></Field>
-      {editId && <ControlAction label="Cancel editing" onClick={() => { setEdit(undefined); setText(""); }} />}
+      {editing && <ControlAction label="Cancel editing" onClick={() => { setEdit(undefined); setText(""); }} />}
     </AsyncForm>
   </ControlPanel>;
 }

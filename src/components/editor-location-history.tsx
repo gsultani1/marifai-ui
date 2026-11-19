@@ -20,9 +20,11 @@ export function EditorLocationHistory({ entries, activeId, onOpen, className }: 
       <ControlAction label="Previous location" disabled={!previous} onClick={() => { if (previous) onOpen(previous); }} />
       <ControlAction label="Next location" disabled={!next} onClick={() => { if (next) onOpen(next); }} />
     </div>
-    <ItemList items={entries} empty="No recorded locations." render={(item) => <ItemHeading title={item.title ?? item.file}
-      detail={item.file + ":" + item.line + (item.column === undefined ? "" : ":" + item.column) + (item.id === activeId ? " · Current" : "")}>
-      <ControlAction label="Open location" item={item.title ?? item.file} onClick={() => onOpen(item)} />
-    </ItemHeading>} />
+    <ItemList items={entries} empty="No recorded locations." render={(item) => {
+      const location = item.file + ":" + item.line + (item.column === undefined ? "" : ":" + item.column);
+      return <ItemHeading title={item.title ?? item.file} detail={location + (item.id === activeId ? " · Current" : "")}>
+        <ControlAction label="Open location" item={item.title ? item.title + " " + location : location} onClick={() => onOpen(item)} />
+      </ItemHeading>;
+    }} />
   </ControlPanel>;
 }

@@ -20,11 +20,13 @@ export function CodeReferenceList({ references, onOpen, className }: CodeReferen
   }
   return <ControlPanel slot="code-reference-list" title="Code references" className={className}>
     {groups.size ? [...groups].map(([file,items]) => <details key={file} open className="space-y-2">
-      <summary className="cursor-pointer text-sm font-medium break-all">{file} · {items.length}</summary>
-      <ItemList items={items} empty="No references." render={(item) => <ItemHeading
-        title={"Line " + item.start.line + (item.start.column === undefined ? "" : ":" + item.start.column)} detail={item.excerpt}>
-        <ControlAction label="Open reference" item={item.id} onClick={() => onOpen(item.start,item.end)} />
-      </ItemHeading>} />
+      <summary className="cursor-pointer text-sm font-medium break-all">{file} · {items.length} {items.length === 1 ? "reference" : "references"}</summary>
+      <ItemList items={items} empty="No references." render={(item) => {
+        const position = item.start.line + (item.start.column === undefined ? "" : ":" + item.start.column);
+        return <ItemHeading title={"Line " + position} detail={item.excerpt}>
+          <ControlAction label="Open reference" item={file + ":" + position} onClick={() => onOpen(item.start,item.end)} />
+        </ItemHeading>;
+      }} />
     </details>) : <p className="text-sm text-muted-foreground">No references.</p>}
   </ControlPanel>;
 }

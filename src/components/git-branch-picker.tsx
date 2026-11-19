@@ -16,8 +16,12 @@ export function GitBranchPicker({ branches, onCheckout, pendingIds = [], classNa
   return <ControlPanel slot="git-branch-picker" title="Git branches" className={className}>
     <FilteredList items={branches} searchLabel="Search branches" searchText={(item) => [item.name]}
       filterLabel="Branch scope" filters={[{value:"local",label:"Local"},{value:"remote",label:"Remote"}]} category={(item) => item.scope}
-      empty="No matching branches." render={(item) => <ItemHeading title={item.name} detail={[item.scope,item.current ? "Current branch" : null,item.unavailableReason].filter(Boolean).join(" · ")}>
-        <ControlAction label="Check out" item={item.name} disabled={item.current || Boolean(item.unavailableReason) || pendingIds.includes(item.id)} onClick={() => onCheckout(item.id)} />
-      </ItemHeading>} />
+      empty="No matching branches." render={(item) => {
+        const busy = pendingIds.includes(item.id);
+        const detail = [item.scope === "local" ? "Local" : "Remote", item.current && "Current branch", busy && "Checking out…", item.unavailableReason].filter(Boolean).join(" · ");
+        return <ItemHeading title={item.name} detail={detail}>
+          <ControlAction label="Check out" item={item.name} disabled={item.current || Boolean(item.unavailableReason) || busy} onClick={() => onCheckout(item.id)} />
+        </ItemHeading>;
+      }} />
   </ControlPanel>;
 }

@@ -12,18 +12,21 @@ export interface EditorDiagnosticsSummaryProps {
   className?: string;
 }
 
+const severities: readonly EditorDiagnosticSeverity[] = ["error","warning","info"];
+const nouns: Record<EditorDiagnosticSeverity, readonly [string, string]> = { error: ["error","errors"], warning: ["warning","warnings"], info: ["info message","info messages"] };
+const countLabel = (count: number, severity: EditorDiagnosticSeverity) => count + " " + nouns[severity][count === 1 ? 0 : 1];
+
 export function EditorDiagnosticsSummary({ counts, onOpen, className }: EditorDiagnosticsSummaryProps) {
-  const severities: readonly EditorDiagnosticSeverity[] = ["error","warning","info"];
-  const files = [...new Set(counts.map((item) => item.file))];
+  const files = [...new Set(counts.filter((item) => item.count > 0).map((item) => item.file))];
   return <ControlPanel slot="editor-diagnostics-summary" title="Diagnostics summary" className={className}>
     <div className="flex flex-wrap gap-2">{severities.map((severity) => {
-      const count = counts.reduce((total,item) => item.severity === severity ? total + item.count : total, 0);
-      return <ControlAction key={severity} label={count + " " + severity} disabled={!count} onClick={() => onOpen(null,severity)} />;
+      const count = counts.reduce((total,item) => item.severity === severity && item.count > 0 ? total + item.count : total, 0);
+      return <ControlAction key={severity} label={countLabel(count, severity)} item="in all files" disabled={!count} onClick={() => onOpen(null,severity)} />;
     })}</div>
     <ItemList items={files.map((file) => ({ id:file }))} empty="No diagnostics." render={({id:file}) => <ItemHeading title={file}>
       {severities.map((severity) => {
-        const count = counts.reduce((total,item) => item.file === file && item.severity === severity ? total + item.count : total,0);
-        return count > 0 && <ControlAction key={severity} label={count + " " + severity} item={file} onClick={() => onOpen(file,severity)} />;
+        const count = counts.reduce((total,item) => item.file === file && item.severity === severity && item.count > 0 ? total + item.count : total,0);
+        return count > 0 && <ControlAction key={severity} label={countLabel(count, severity)} item={"in " + file} onClick={() => onOpen(file,severity)} />;
       })}
     </ItemHeading>} />
   </ControlPanel>;

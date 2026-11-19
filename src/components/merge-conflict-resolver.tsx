@@ -13,15 +13,21 @@ export interface MergeConflictResolverProps {
   className?: string;
 }
 const options = [{ value: "current", label: "Use current" }, { value: "incoming", label: "Use incoming" }, { value: "both", label: "Use both" }] as const;
+const resolved: Record<MergeConflictChoice, string> = { current: "Resolved: kept the current change.", incoming: "Resolved: kept the incoming change.", both: "Resolved: kept both changes." };
 export function MergeConflictResolver({ conflicts, onResolve, pendingIds = [], className }: MergeConflictResolverProps) {
   return <ControlPanel slot="merge-conflict-resolver" title="Merge conflicts" className={className}>
-    <ItemList items={conflicts} empty="No merge conflicts." render={(item) => <>
-      <h4 className="text-sm font-medium break-words">{item.file}</h4>
-      <DiffView oldValue={item.current} newValue={item.incoming} oldTitle="Current" newTitle="Incoming" />
-      {item.choice ? <p className="text-sm">Selected {item.choice}.</p> : <div className="flex flex-wrap gap-2">
-        {options.map(({ value, label }) => <ControlAction key={value} label={label} item={item.file}
-          disabled={pendingIds.includes(item.id)} onClick={() => onResolve(item.id, value)} />)}
-      </div>}
-    </>} />
+    <ItemList items={conflicts} empty="No merge conflicts." render={(item) => {
+      const busy = pendingIds.includes(item.id);
+      return <>
+        <h4 className="text-sm font-medium break-words">{item.file}</h4>
+        <DiffView oldValue={item.current} newValue={item.incoming} oldTitle="Current" newTitle="Incoming" />
+        {/* The status stays mounted so screen readers announce the resolution after the choice buttons go away. */}
+        <p role="status" className="text-sm">{item.choice ? resolved[item.choice] : busy ? "Resolving…" : "Unresolved"}</p>
+        {!item.choice && <div className="flex flex-wrap gap-2">
+          {options.map(({ value, label }) => <ControlAction key={value} label={label} item={item.file}
+            disabled={busy} onClick={() => onResolve(item.id, value)} />)}
+        </div>}
+      </>;
+    }} />
   </ControlPanel>;
 }

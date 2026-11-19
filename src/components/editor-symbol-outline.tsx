@@ -28,6 +28,8 @@ export function EditorSymbolOutline({ symbols, activeId, onOpen, className }: Ed
     return false;
   }
   return <ControlPanel slot="editor-symbol-outline" title="Symbol outline" className={className}>
-    <LabeledTree items={symbols} label="Symbols" activeId={activeId ?? null} detail={(item) => item.kind} searchable onSelect={(id) => { open(symbols, id); }} />
+    {symbols.length
+      ? <LabeledTree items={symbols} label="Symbols" activeId={activeId ?? null} detail={(item) => item.kind} searchable onSelect={(id) => { open(symbols, id); }} />
+      : <p className="text-sm text-muted-foreground">No symbols in this file.</p>}
   </ControlPanel>;
 }
