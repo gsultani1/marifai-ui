@@ -1,10 +1,16 @@
 // packages/ai-ui/example/gallery.tsx
 import { useEffect, useRef, useState } from "react";
 
+import { AgentOpsGallery } from "./gallery/agent-ops.js";
 import { AgentRunGallery } from "./gallery/agent-run.js";
+import { AssistantGallery } from "./gallery/assistant.js";
+import { AutomationGallery } from "./gallery/automation.js";
+import { BrowserPanelsGallery } from "./gallery/browser-panels.js";
+import { ChatToolsGallery } from "./gallery/chat-tools.js";
 import { ComposerGallery } from "./gallery/composer.js";
 import { ControlsGallery } from "./gallery/controls.js";
 import { ConversationGallery } from "./gallery/conversation.js";
+import { DevToolsGallery } from "./gallery/dev-tools.js";
 import { DisplayGallery } from "./gallery/display.js";
 import { ExecutionGallery } from "./gallery/execution.js";
 import { FeedbackGallery } from "./gallery/feedback.js";
@@ -20,9 +26,11 @@ import { SchedulingGallery } from "./gallery/scheduling.js";
 import { SettingsGallery } from "./gallery/settings.js";
 import { ShellGallery } from "./gallery/shell.js";
 import { SiteGallery } from "./gallery/site.js";
+import { TasksGallery } from "./gallery/tasks.js";
+import { ToolsModelsGallery } from "./gallery/tools-models.js";
 import { VIBE_CODING_SECTION, VibeCodingGallery } from "./gallery/vibe-coding.js";
-import { WorkspaceGallery } from "./gallery/workspace.js";
 import { WorkflowToolsGallery } from "./gallery/workflow-tools.js";
+import { WorkspaceGallery } from "./gallery/workspace.js";
 
 const SECTIONS = [
   { id: "gallery-workflow-tools", title: "Browser, IDE and assistant tools" },
@@ -46,6 +54,14 @@ const SECTIONS = [
   { id: "gallery-preview", title: "Previews, review and artifacts" },
   { id: "gallery-settings", title: "Models, usage and settings" },
   { id: "gallery-knowledge", title: "Knowledge, evidence, insights and agents" },
+  { id: "gallery-agent-ops", title: "Agent operations and traces" },
+  { id: "gallery-tools-models", title: "Tools, models and prompts" },
+  { id: "gallery-chat-tools", title: "Chat review and message tools" },
+  { id: "gallery-assistant", title: "Assistant planning and meetings" },
+  { id: "gallery-tasks", title: "Task management" },
+  { id: "gallery-automation", title: "Automations" },
+  { id: "gallery-browser-panels", title: "Browser panels" },
+  { id: "gallery-dev-tools", title: "Debugger, git and editor panels" },
 ];
 
 export function GalleryDemo() {
@@ -114,6 +130,14 @@ export function GalleryDemo() {
         <PreviewGallery />
         <SettingsGallery />
         <KnowledgeGallery />
+        <AgentOpsGallery />
+        <ToolsModelsGallery />
+        <ChatToolsGallery />
+        <AssistantGallery />
+        <TasksGallery />
+        <AutomationGallery />
+        <BrowserPanelsGallery />
+        <DevToolsGallery />
       </div>}
     </div>
   );
