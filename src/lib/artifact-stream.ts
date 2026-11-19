@@ -1,9 +1,11 @@
 // packages/ai-ui/src/lib/artifact-stream.ts
+import { readArtifactPayload, type ArtifactPayload } from "./artifact-payload.js";
+
 export type ArtifactAttributes = Record<string, string>;
 
 export type ArtifactSegment =
   | { type: "text"; text: string }
-  | { type: "artifact"; tag: string; attributes: ArtifactAttributes; content: string; complete: boolean };
+  | { type: "artifact"; tag: string; attributes: ArtifactAttributes; content: string; complete: boolean; payload?: ArtifactPayload };
 
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", "#39": "'" };
 
@@ -57,7 +59,16 @@ export function parseArtifactSegments(
     const start = match.index + match[0].length;
     const end = text.indexOf(`</${tag}>`, start);
     const content = end === -1 ? text.slice(start) : text.slice(start, end);
-    segments.push({ type: "artifact", tag, attributes: parseAttributes(match[2] ?? ""), content: stripFence(content), complete: end !== -1 });
+    const attributes = parseAttributes(match[2] ?? "");
+    const value = stripFence(content);
+    const complete = end !== -1;
+    if (complete && tag === "artifact" && ("kind" in attributes || "schema-version" in attributes)) {
+      const payload = readArtifactPayload(attributes, value);
+      if (payload) segments.push({ type: "artifact", tag, attributes, content: value, complete, payload });
+      else segments.push({ type: "text", text: text.slice(match.index, end + tag.length + 3) });
+    } else {
+      segments.push({ type: "artifact", tag, attributes, content: value, complete });
+    }
     cursor = end === -1 ? text.length : end + tag.length + 3;
     open.lastIndex = cursor;
   }
