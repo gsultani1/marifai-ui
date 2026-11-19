@@ -593,6 +593,9 @@ async function checkGallery(page, url) {
   await viewer.getByRole("button", { name: "Next version" }).click();
   await viewer.getByText("Latest").waitFor();
   const pageFrame = page.frameLocator('[data-slot="artifact-viewer"][aria-label="Sale landing page"] iframe');
+  // The button is parsed before the inline script that attaches its click handler, so a click can land in
+  // between on a slow runner. The same script fills in the store hours, so wait for those first.
+  await pageFrame.getByText(/Sun 10 AM/).waitFor();
   await pageFrame.getByRole("button", { name: "Remind me" }).click();
   await pageFrame.getByText("We'll remind you").waitFor();
   assert.equal(await viewer.getByRole("alert").count(), 0);
