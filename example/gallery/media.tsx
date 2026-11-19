@@ -1,4 +1,4 @@
-// packages/ai-ui/example/gallery/media.tsx
+// example/gallery/media.tsx
 import { useMemo, useState } from "react";
 
 import {
@@ -26,11 +26,12 @@ const PAGE_V2 = `<!doctype html>
 <html><body style="font-family:system-ui;margin:0;padding:32px;background:#fff7ed">
 <h1 style="color:#9a3412">Spring Garden Sale</h1>
 <p id="hours"></p>
-<button id="remind" style="padding:8px 14px;border-radius:8px;border:0;background:#9a3412;color:white">Remind me</button>
+<button id="remind" disabled style="padding:8px 14px;border-radius:8px;border:0;background:#9a3412;color:white">Remind me</button>
 <script>
 const storeHours = ["Mon–Fri 7 AM–7 PM", "Sat 8 AM–6 PM", "Sun 10 AM–4 PM"];
 document.getElementById("hours").textContent = storeHours.join(" · ");
 document.getElementById("remind").addEventListener("click", (event) => { event.target.textContent = "We'll remind you"; });
+document.getElementById("remind").disabled = false;
 </script>
 </body></html>`;
 

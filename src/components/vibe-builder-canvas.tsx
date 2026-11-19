@@ -1,13 +1,13 @@
-// packages/ai-ui/src/components/vibe-builder-canvas.tsx
+// src/components/vibe-builder-canvas.tsx
 "use client";
 
 import type { BuilderDocument } from "../lib/page-builder.js";
 import { cn } from "../lib/cn.js";
-import { PageBuilder, type PageBuilderProps } from "./page-builder.js";
+import { PageBuilder, type PageBuilderChange, type PageBuilderProps } from "./page-builder.js";
 
-export interface VibeBuilderCanvasProps extends Pick<PageBuilderProps, "height" | "label" | "onImageUpload" | "className" | "layout" | "toolbar"> {
+export interface VibeBuilderCanvasProps extends Pick<PageBuilderProps, "height" | "label" | "onImageUpload" | "className" | "layout" | "toolbar" | "inspectorMode" | "breakpoint" | "onBreakpointChange" | "registry" | "tokens" | "historyControls" | "highlightedBlockIds"> {
   document: BuilderDocument;
-  onDocumentChange: (document: BuilderDocument) => void;
+  onDocumentChange: (document: BuilderDocument, change?: PageBuilderChange) => void;
   selectedBlockId: string | null;
   onSelectedBlockChange: (id: string | null) => void;
 }

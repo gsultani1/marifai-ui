@@ -1,4 +1,4 @@
-// packages/ai-ui/src/components/page-builder-panels.tsx
+// src/components/page-builder-panels.tsx
 "use client";
 
 import { Switch } from "@base-ui/react/switch";
@@ -12,6 +12,7 @@ import {
   type BlockPatch,
   type BuilderAlign,
   type BuilderBlock,
+  type BuilderBlockDefinition,
   type BuilderBlockPatch,
   type BuilderDocument,
   type BuilderDocumentPatch,
@@ -340,12 +341,19 @@ export interface BlockSettingsProps {
   onChange: (patch: BuilderBlockPatch, field?: string) => void;
   onImageUpload: ((file: File) => Promise<string>) | undefined;
   onStatus: (message: string) => void;
+  registry?: readonly BuilderBlockDefinition[];
 }
 
 /** The settings for one selected block. */
-export function BlockSettings({ block, settings, mode, onChange, onImageUpload, onStatus }: BlockSettingsProps) {
+export function BlockSettings({ block, settings, mode, onChange, onImageUpload, onStatus, registry }: BlockSettingsProps) {
   let body: ReactNode;
   switch (block.type) {
+    case "custom": {
+      const definition = registry?.find((entry) => entry.type === block.name);
+      body = definition?.renderInspector?.(block, (props) => onChange({ props }, "props"))
+        ?? <p className="text-sm text-muted-foreground">{definition ? "This block has no additional properties." : `The host must register ${block.name} to edit its properties. Its saved data is preserved.`}</p>;
+      break;
+    }
     case "heading":
       body = <HeadingSettings block={block} onChange={onChange} settings={settings} />;
       break;

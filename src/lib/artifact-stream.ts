@@ -1,9 +1,11 @@
 // packages/ai-ui/src/lib/artifact-stream.ts
+import { readArtifactPayload, type ArtifactPayload } from "./artifact-payload.js";
+
 export type ArtifactAttributes = Record<string, string>;
 
 export type ArtifactSegment =
   | { type: "text"; text: string }
-  | { type: "artifact"; tag: string; attributes: ArtifactAttributes; content: string; complete: boolean };
+  | { type: "artifact"; tag: string; attributes: ArtifactAttributes; content: string; complete: boolean; payload?: ArtifactPayload };
 
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", "#39": "'" };
 
@@ -41,6 +43,7 @@ function partialTagLength(text: string, tags: readonly string[]): number {
  * Splits model output into prose and `<artifact …>…</artifact>` blocks. An
  * unclosed block is returned with `complete: false`; with `streaming`, a
  * half-written opening tag at the end is hidden instead of shown as text.
+ * Only an explicit `schema-version` opts a closed artifact into payload validation.
  */
 export function parseArtifactSegments(
   text: string,
@@ -57,7 +60,16 @@ export function parseArtifactSegments(
     const start = match.index + match[0].length;
     const end = text.indexOf(`</${tag}>`, start);
     const content = end === -1 ? text.slice(start) : text.slice(start, end);
-    segments.push({ type: "artifact", tag, attributes: parseAttributes(match[2] ?? ""), content: stripFence(content), complete: end !== -1 });
+    const attributes = parseAttributes(match[2] ?? "");
+    const value = stripFence(content);
+    const complete = end !== -1;
+    if (complete && tag === "artifact" && Object.hasOwn(attributes, "schema-version")) {
+      const payload = readArtifactPayload(attributes, value);
+      if (payload) segments.push({ type: "artifact", tag, attributes, content: value, complete, payload });
+      else segments.push({ type: "text", text: text.slice(match.index, end + tag.length + 3) });
+    } else {
+      segments.push({ type: "artifact", tag, attributes, content: value, complete });
+    }
     cursor = end === -1 ? text.length : end + tag.length + 3;
     open.lastIndex = cursor;
   }

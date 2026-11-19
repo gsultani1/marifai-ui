@@ -1,5 +1,7 @@
-// packages/ai-ui/src/lib/page-builder.ts
+// src/lib/page-builder.ts
+import type { ReactNode } from "react";
 import { EMBED_IFRAME_ATTRS, embedFromUrl, type EmbedSource, safeCssColor, safeFontFamily, sanitizeHtml } from "./rich-text/html.js";
+import { htmlToText } from "./html-text.js";
 import { safeImageSrc, safeLinkHref } from "./safe-url.js";
 
 export type BuilderAlign = "left" | "center" | "right";
@@ -8,6 +10,51 @@ export type SocialNetwork = "facebook" | "instagram" | "x" | "linkedin" | "youtu
 
 interface BlockBase {
   id: string;
+  style?: BuilderBlockStyle;
+  responsive?: Partial<Record<"tablet" | "mobile", BuilderBlockStyle>>;
+}
+
+export type BuilderBreakpoint = "desktop" | "tablet" | "mobile";
+export type BuilderValue = string | number | boolean | null | BuilderValue[] | { [key: string]: BuilderValue };
+
+export interface BuilderBlockStyle {
+  padding?: number;
+  marginTop?: number;
+  marginBottom?: number;
+  fontSize?: number;
+  lineHeight?: number;
+  color?: string;
+  background?: string;
+  align?: BuilderAlign;
+  borderRadius?: number;
+  widthPercent?: number;
+}
+
+export interface BuilderDesignToken {
+  id: string;
+  label: string;
+  value: string;
+}
+
+export interface CustomBlock extends BlockBase {
+  type: "custom";
+  name: string;
+  props: Record<string, BuilderValue>;
+}
+
+export interface BuilderBlockDefinition {
+  type: string;
+  label: string;
+  create: () => Record<string, BuilderValue>;
+  render: (block: CustomBlock) => ReactNode;
+  renderToHtml: (block: CustomBlock) => string;
+  renderInspector?: (block: CustomBlock, onChange: (props: CustomBlock["props"]) => void) => ReactNode;
+  allowedParents?: readonly ("root" | "section" | "column")[];
+  suggestions?: readonly string[];
+}
+
+export function createCustomBuilderBlock(definition: BuilderBlockDefinition): CustomBlock {
+  return { id: newBuilderId("custom"), type: "custom", name: definition.type, props: structuredClone(definition.create()) };
 }
 
 export interface HeadingBlock extends BlockBase {
@@ -76,7 +123,7 @@ export interface VideoBlock extends BlockBase {
   title: string;
 }
 
-export type LeafBlock = HeadingBlock | TextBlock | ImageBlock | ButtonBlock | DividerBlock | SpacerBlock | SocialBlock | VideoBlock;
+export type LeafBlock = HeadingBlock | TextBlock | ImageBlock | ButtonBlock | DividerBlock | SpacerBlock | SocialBlock | VideoBlock | CustomBlock;
 
 export interface BuilderColumn {
   id: string;
@@ -146,6 +193,7 @@ export const BUILDER_BLOCK_LABELS: Record<BuilderBlockType, string> = {
   video: "Video",
   columns: "Columns",
   section: "Section",
+  custom: "Custom block",
 };
 
 export const SOCIAL_LABELS: Record<SocialNetwork, string> = {
@@ -159,7 +207,7 @@ export const SOCIAL_LABELS: Record<SocialNetwork, string> = {
   email: "Email",
 };
 
-const LEAF_TYPES = new Set<BuilderBlockType>(["heading", "text", "image", "button", "divider", "spacer", "social", "video"]);
+const LEAF_TYPES = new Set<BuilderBlockType>(["heading", "text", "image", "button", "divider", "spacer", "social", "video", "custom"]);
 const clamp = (value: number, min: number, max: number) => (Number.isFinite(value) ? Math.min(max, Math.max(min, Math.round(value))) : min);
 
 export function isLeafBlock(block: BuilderBlock): block is LeafBlock {
@@ -214,6 +262,8 @@ export function createBuilderBlock(type: BuilderBlockType): BuilderBlock {
       return { id, type, gap: 16, columns: [{ id: newBuilderId("column"), blocks: [] }, { id: newBuilderId("column"), blocks: [] }] };
     case "section":
       return { id, type, background: "#f8fafc", padding: 24, blocks: [] };
+    case "custom":
+      return { id, type, name: "custom", props: {} };
   }
 }
 
@@ -235,8 +285,56 @@ const align = (value: unknown, fallback: BuilderAlign = "left"): BuilderAlign =>
 const color = (value: unknown, fallback: string) => (typeof value === "string" && safeCssColor(value)) || fallback;
 const id = (value: unknown, prefix: string) => (typeof value === "string" && /^[\w-]{1,64}$/.test(value) ? value : newBuilderId(prefix));
 
+function normalizeBlockStyle(value: unknown): BuilderBlockStyle {
+  const raw = record(value);
+  const result: BuilderBlockStyle = {};
+  for (const key of ["padding", "marginTop", "marginBottom", "fontSize", "borderRadius", "widthPercent"] as const) {
+    if (typeof raw[key] === "number" && Number.isFinite(raw[key])) {
+      result[key] = clamp(raw[key], key === "fontSize" ? 8 : 0, key === "widthPercent" ? 100 : 200);
+    }
+  }
+  if (typeof raw.lineHeight === "number" && Number.isFinite(raw.lineHeight)) result.lineHeight = Math.min(3, Math.max(0.8, raw.lineHeight));
+  for (const key of ["color", "background"] as const) {
+    const parsed = typeof raw[key] === "string" ? safeCssColor(raw[key]) : null;
+    if (parsed) result[key] = parsed;
+  }
+  if (raw.align === "left" || raw.align === "center" || raw.align === "right") result.align = raw.align;
+  return result;
+}
+
+function normalizeBlockBase(raw: Record<string, unknown>): BlockBase {
+  const base: BlockBase = { id: id(raw.id, String(raw.type ?? "block")) };
+  if (raw.style) base.style = normalizeBlockStyle(raw.style);
+  if (raw.responsive) {
+    const responsive = record(raw.responsive);
+    base.responsive = {};
+    if (responsive.tablet) base.responsive.tablet = normalizeBlockStyle(responsive.tablet);
+    if (responsive.mobile) base.responsive.mobile = normalizeBlockStyle(responsive.mobile);
+  }
+  return base;
+}
+
+function normalizeCustomValue(value: unknown, depth = 0): BuilderValue {
+  if (value === null || typeof value === "boolean") return value;
+  if (typeof value === "string") return value.slice(0, 100_000);
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (depth >= 8) return null;
+  if (Array.isArray(value)) return value.slice(0, 100).map((item) => normalizeCustomValue(item, depth + 1));
+  const entries = Object.entries(record(value)).filter(([key]) => !["__proto__", "prototype", "constructor"].includes(key)).slice(0, 100);
+  return Object.fromEntries(entries.map(([key, item]) => [key, normalizeCustomValue(item, depth + 1)]));
+}
+
+/** Mobile inherits tablet values, which inherit the desktop values. */
+export function resolveBuilderBlockStyle(block: BuilderBlock, breakpoint: BuilderBreakpoint = "desktop"): BuilderBlockStyle {
+  return normalizeBlockStyle({
+    ...block.style,
+    ...(breakpoint !== "desktop" ? block.responsive?.tablet : {}),
+    ...(breakpoint === "mobile" ? block.responsive?.mobile : {}),
+  });
+}
+
 function normalizeLeaf(raw: Record<string, unknown>): LeafBlock | null {
-  const base = { id: id(raw.id, String(raw.type ?? "block")) };
+  const base = normalizeBlockBase(raw);
   switch (raw.type) {
     case "heading":
       return { ...base, type: "heading", text: text(raw.text, "", 500), level: raw.level === 1 || raw.level === 3 ? raw.level : 2, align: align(raw.align), ...(typeof raw.color === "string" && safeCssColor(raw.color) ? { color: safeCssColor(raw.color)! } : {}) };
@@ -260,6 +358,8 @@ function normalizeLeaf(raw: Record<string, unknown>): LeafBlock | null {
     }
     case "video":
       return { ...base, type: "video", url: text(raw.url, "", 2000), title: text(raw.title, "", 300) };
+    case "custom":
+      return { ...base, type: "custom", name: text(raw.name, "custom", 100), props: normalizeCustomValue(record(raw.props)) as CustomBlock["props"] };
     default:
       return null;
   }
@@ -274,12 +374,12 @@ function normalizeBlock(value: unknown, depth: number): BuilderBlock | null {
       .map(record)
       .map((column) => ({ id: id(column.id, "column"), blocks: (Array.isArray(column.blocks) ? column.blocks : []).map((child) => normalizeLeaf(record(child))).filter((child): child is LeafBlock => child !== null) }));
     while (columns.length < 2) columns.push({ id: newBuilderId("column"), blocks: [] });
-    return { id: id(raw.id, "columns"), type: "columns", gap: clamp(num(raw.gap, 16), 0, 64), columns };
+    return { ...normalizeBlockBase(raw), type: "columns", gap: clamp(num(raw.gap, 16), 0, 64), columns };
   }
   if (raw.type === "section") {
     if (depth > 0) return null;
     const blocks = (Array.isArray(raw.blocks) ? raw.blocks : []).map((child) => normalizeBlock(child, depth + 1)).filter((child): child is LeafBlock | ColumnsBlock => child !== null && child.type !== "section");
-    return { id: id(raw.id, "section"), type: "section", background: color(raw.background, "#f8fafc"), padding: clamp(num(raw.padding, 24), 0, 96), blocks };
+    return { ...normalizeBlockBase(raw), type: "section", background: color(raw.background, "#f8fafc"), padding: clamp(num(raw.padding, 24), 0, 96), blocks };
   }
   return normalizeLeaf(raw);
 }
@@ -374,9 +474,10 @@ export function columnsOwning(doc: BuilderDocument, columnId: string): ColumnsBl
 }
 
 /** Whether a block of this type may go in the container: sections only at the top level, columns not inside columns. */
-export function canContain(doc: BuilderDocument, containerId: string, type: BuilderBlockType): boolean {
+export function canContain(doc: BuilderDocument, containerId: string, type: BuilderBlockType, definition?: BuilderBlockDefinition): boolean {
   const container = containers(doc).find((item) => item.id === containerId);
   if (!container) return false;
+  if (definition?.allowedParents && !definition.allowedParents.includes(container.kind)) return false;
   if (container.kind === "root") return true;
   if (container.kind === "section") return type !== "section";
   return LEAF_TYPES.has(type);
@@ -393,8 +494,9 @@ function mapContainer(doc: BuilderDocument, containerId: string, update: (blocks
   return { ...doc, blocks: visit(doc.blocks) };
 }
 
-export function insertBuilderBlock(doc: BuilderDocument, block: BuilderBlock, containerId: string, index: number): BuilderDocument {
-  if (!canContain(doc, containerId, block.type)) return doc;
+export function insertBuilderBlock(doc: BuilderDocument, block: BuilderBlock, containerId: string, index: number, registry?: readonly BuilderBlockDefinition[]): BuilderDocument {
+  const definition = block.type === "custom" ? registry?.find((entry) => entry.type === block.name) : undefined;
+  if (!canContain(doc, containerId, block.type, definition)) return doc;
   return mapContainer(doc, containerId, (blocks) => {
     const next = [...blocks];
     next.splice(Math.max(0, Math.min(index, next.length)), 0, block);
@@ -413,12 +515,15 @@ export function updateBuilderBlock(doc: BuilderDocument, blockId: string, patch:
 }
 
 /** Moves a block to an index in a container; the index counts positions before the move. The nesting rules rule out moving a block into itself. */
-export function moveBuilderBlock(doc: BuilderDocument, blockId: string, containerId: string, index: number): BuilderDocument {
+export function moveBuilderBlock(doc: BuilderDocument, blockId: string, containerId: string, index: number, registry?: readonly BuilderBlockDefinition[]): BuilderDocument {
   const location = findBuilderBlock(doc, blockId);
-  if (!location || !canContain(doc, containerId, location.block.type)) return doc;
+  if (!location) return doc;
+  const block = location.block;
+  const definition = block.type === "custom" ? registry?.find((entry) => entry.type === block.name) : undefined;
+  if (!canContain(doc, containerId, location.block.type, definition)) return doc;
   const target = location.containerId === containerId && index > location.index ? index - 1 : index;
   if (location.containerId === containerId && target === location.index) return doc;
-  return insertBuilderBlock(removeBuilderBlock(doc, blockId), location.block, containerId, target);
+  return insertBuilderBlock(removeBuilderBlock(doc, blockId), location.block, containerId, target, registry);
 }
 
 /** Moves a block one step up or down within its container. */
@@ -458,7 +563,7 @@ export function builderBlockLabel(block: BuilderBlock): string {
     case "heading":
       return `${name}: ${snippet(block.text) || "empty"}`;
     case "text":
-      return `${name}: ${snippet(block.html.replace(/<[^>]*>/g, " ")) || "empty"}`;
+      return `${name}: ${snippet(htmlToText(block.html)) || "empty"}`;
     case "image":
       return `${name}: ${block.alt || (block.src ? "no description" : "not set")}`;
     case "button":
@@ -469,6 +574,8 @@ export function builderBlockLabel(block: BuilderBlock): string {
       return `${block.columns.length} ${name.toLowerCase()}`;
     case "section":
       return `${name}, ${block.blocks.length} ${block.blocks.length === 1 ? "block" : "blocks"}`;
+    case "custom":
+      return `Custom: ${snippet(block.name)}`;
     default:
       return name;
   }
@@ -487,6 +594,7 @@ export interface BuilderRenderContext {
   available: number;
   /** Renders placeholders for empty images and videos and a stand-in instead of live players. */
   editing?: boolean;
+  registry?: readonly BuilderBlockDefinition[];
 }
 
 export function escapeHtml(value: string): string {
@@ -583,6 +691,10 @@ export function renderLeafHtml(block: LeafBlock, context: BuilderRenderContext):
   const { settings, target, editing = false } = context;
   const link = safeColor(settings.linkColor, "#1d4ed8");
   switch (block.type) {
+    case "custom": {
+      const definition = context.registry?.find((entry) => entry.type === block.name);
+      return definition ? sanitizeHtml(definition.renderToHtml(block)) : placeholder(`Unavailable block: ${block.name}`, 64);
+    }
     case "heading": {
       const style = css({ margin: "0", "font-size": `${HEADING_SIZES[block.level]}px`, "line-height": "1.25", "font-weight": "700", "text-align": block.align, color: safeColor(block.color, safeColor(settings.textColor, "#1f2937")) });
       return `<h${block.level} style="${style}">${escapeHtml(block.text)}</h${block.level}>`;
@@ -651,6 +763,7 @@ const leafCache = new WeakMap<LeafBlock, Map<string, string>>();
 
 /** renderLeafHtml with a per-block cache, for the editing canvas. */
 export function cachedLeafHtml(block: LeafBlock, context: BuilderRenderContext): string {
+  if (block.type === "custom") return renderLeafHtml(block, context);
   const { settings } = context;
   const key = [context.target, context.available, context.editing ? 1 : 0, settings.linkColor, settings.textColor].join("|");
   let entries = leafCache.get(block);
@@ -668,22 +781,57 @@ export function cachedLeafHtml(block: LeafBlock, context: BuilderRenderContext):
 /** Vertical padding around every content block, in pixels. */
 export const BLOCK_PADDING = 10;
 
+/** Shared by the editing canvas and generated HTML. */
+export function builderBlockClass(block: BuilderBlock): string {
+  return `pb-style-${block.id.replace(/[^\w-]/g, "")}`;
+}
+
+function blockStyleRules(block: BuilderBlock, style: BuilderBlockStyle): string {
+  const selector = `.${builderBlockClass(block)}`;
+  const normalized = normalizeBlockStyle(style);
+  const pixel = (value: number | undefined) => value === undefined ? undefined : `${value}px`;
+  const box = css({
+    padding: pixel(normalized.padding),
+    "margin-top": pixel(normalized.marginTop),
+    "margin-bottom": pixel(normalized.marginBottom),
+    background: normalized.background,
+    "border-radius": pixel(normalized.borderRadius),
+    width: normalized.widthPercent === undefined ? undefined : `${normalized.widthPercent}%`,
+  });
+  const typography = css({ "font-size": pixel(normalized.fontSize), "line-height": normalized.lineHeight, color: normalized.color, "text-align": normalized.align });
+  const important = (rules: string) => rules.replace(/(;|$)/g, "!important$1");
+  const canvasPadding = normalized.padding === undefined ? "" : `${selector}.pb-builder-frame>div:not([data-builder-actions]){padding:0!important}`;
+  return `${box ? `${selector}{${important(box)}}` : ""}${canvasPadding}${typography ? `${selector},${selector}>div,${selector}>h1,${selector}>h2,${selector}>h3,${selector}>div>:is(h1,h2,h3,p,a){${important(typography)}}` : ""}`;
+}
+
+/** Desktop styles plus tablet (768px) and mobile (480px) overrides. A selected breakpoint renders the same cascade on the canvas. */
+export function builderResponsiveCss(doc: BuilderDocument, breakpoint?: BuilderBreakpoint): string {
+  const blocks = containers(doc).flatMap((container) => container.blocks);
+  return blocks.map((block) => {
+    if (breakpoint) return blockStyleRules(block, resolveBuilderBlockStyle(block, breakpoint));
+    const desktop = blockStyleRules(block, block.style ?? {});
+    const tablet = block.responsive?.tablet ? `@media(max-width:768px){${blockStyleRules(block, block.responsive.tablet)}}` : "";
+    const mobile = block.responsive?.mobile ? `@media(max-width:480px){${blockStyleRules(block, block.responsive.mobile)}}` : "";
+    return desktop + tablet + mobile;
+  }).join("");
+}
+
 function renderWebBlocks(blocks: BuilderBlock[], context: BuilderRenderContext, inset: number): string {
   return blocks
     .map((block) => {
       if (block.type === "section") {
         const padding = clamp(block.padding, 0, 96);
         const inner = renderWebBlocks(block.blocks, { ...context, available: context.available - padding * 2 }, 0);
-        return `<div style="${css({ background: safeColor(block.background, "transparent"), padding: `${padding}px` })}">${inner}</div>`;
+        return `<div${block.style || block.responsive ? ` class="${builderBlockClass(block)}"` : ""} style="${css({ background: safeColor(block.background, "transparent"), padding: `${padding}px` })}">${inner}</div>`;
       }
       if (block.type === "columns") {
         const gap = clamp(block.gap, 0, 64);
         const width = Math.floor((context.available - inset * 2 - gap * (block.columns.length - 1)) / block.columns.length);
         const columns = block.columns.map((column) => `<div class="pb-col" style="flex:1 1 0;min-width:0">${renderWebBlocks(column.blocks, { ...context, available: width }, 0)}</div>`).join("");
-        return `<div class="pb-cols" style="${css({ display: "flex", gap: `${gap}px`, padding: `0 ${inset}px` })}">${columns}</div>`;
+        return `<div class="pb-cols${block.style || block.responsive ? ` ${builderBlockClass(block)}` : ""}" style="${css({ display: "flex", gap: `${gap}px`, padding: `0 ${inset}px` })}">${columns}</div>`;
       }
       const html = renderLeafHtml(block, { ...context, available: context.available - inset * 2 });
-      return html ? `<div style="${css({ padding: `${BLOCK_PADDING}px ${inset}px` })}">${html}</div>` : "";
+      return html ? `<div${block.style || block.responsive ? ` class="${builderBlockClass(block)}"` : ""} style="${css({ padding: `${BLOCK_PADDING}px ${inset}px` })}">${html}</div>` : "";
     })
     .join("");
 }
@@ -720,19 +868,20 @@ export interface BuilderHtmlOptions {
   target?: BuilderTarget;
   /** Page language for the lang attribute. */
   lang?: string;
+  registry?: readonly BuilderBlockDefinition[];
 }
 
 /** A complete HTML document for the design. Text blocks are sanitized; needs a DOM for that, as in the browser. */
-export function builderToHtml(design: BuilderDocument, { target = "email", lang = "en" }: BuilderHtmlOptions = {}): string {
+export function builderToHtml(design: BuilderDocument, { target = "email", lang = "en", registry }: BuilderHtmlOptions = {}): string {
   const doc = normalizeBuilderDocument(design);
   const { settings } = doc;
   const font = safeFontFamily(settings.fontFamily) ?? "Arial, sans-serif";
-  const context: BuilderRenderContext = { target, settings, available: settings.width };
+  const context: BuilderRenderContext = { target, settings, available: settings.width, ...(registry ? { registry } : {}) };
   const title = escapeHtml(doc.title);
   const language = /^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/i.test(lang) ? lang : "en";
   if (target === "web") {
     const style = `body{margin:0;background:${settings.background}}.pb-page{max-width:${settings.width}px;margin:0 auto;background:${settings.contentBackground};font-family:${font};color:${settings.textColor};padding:${BLOCK_PADDING * 2}px 0}img,video,iframe{max-width:100%}@media (max-width:${Math.min(settings.width, 720)}px){.pb-cols{flex-direction:column}}`;
-    return `<!doctype html><html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title><style>${style}</style></head><body><main class="pb-page">${renderWebBlocks(doc.blocks, context, settings.padding)}</main></body></html>`;
+    return `<!doctype html><html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title><style>${style}${builderResponsiveCss(doc)}</style></head><body><main class="pb-page">${renderWebBlocks(doc.blocks, context, settings.padding)}</main></body></html>`;
   }
   const style = `body{margin:0;padding:0;width:100%!important}table{border-collapse:collapse}img{border:0;outline:none;text-decoration:none}@media only screen and (max-width:${settings.width + 20}px){.pb-container{width:100%!important}.pb-col{display:block!important;width:100%!important;padding:0!important}}`;
   const preheader = doc.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all">${escapeHtml(doc.preheader)}</div>` : "";
