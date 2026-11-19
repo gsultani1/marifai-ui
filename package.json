@@ -39,8 +39,8 @@
       "default": "./dist/experimental/index.js"
     },
     "./experimental/*": {
-      "types": "./dist/experimental/*.d.ts",
-      "default": "./dist/experimental/*.js"
+      "types": "./dist/components/*.d.ts",
+      "default": "./dist/components/*.js"
     },
     "./preset.css": "./src/styles/preset.css",
     "./styles.css": "./src/styles/preset.css",

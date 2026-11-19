@@ -1,7 +1,7 @@
 // packages/ai-ui/src/lib/component-controls.tsx
 "use client";
 
-import { type ReactNode, useId, useRef, useState } from "react";
+import { type ReactNode, type SyntheticEvent, useId, useRef, useState } from "react";
 
 import { Button } from "../components/button.js";
 import { focusRing } from "./classes.js";
@@ -31,6 +31,7 @@ export function SearchField({ label, value, onChange }: { label: string; value: 
 
 export function matchesQuery(query: string, ...values: Array<string | undefined>) {
   const needle = query.trim().toLocaleLowerCase();
+  if (!needle) return true;
   return values.some((value) => value?.toLocaleLowerCase().includes(needle));
 }
 
@@ -57,30 +58,48 @@ export function ControlAction({ label, item, onClick, disabled }: {
   label: string; item?: string | undefined; onClick?: (() => void) | undefined; disabled?: boolean | undefined;
 }) {
   if (!onClick) return null;
-  return <Button type="button" size="sm" variant="outline" aria-label={item ? label + " " + item : undefined} disabled={disabled} onClick={onClick}>{label}</Button>;
+  return <Button type="button" size="sm" variant="outline" aria-label={item ? label + " " + item : undefined} disabled={disabled} focusableWhenDisabled onClick={onClick}>{label}</Button>;
 }
 
-export function ChoiceField<T extends string>({ label, value, options, onChange, placeholder, disabled }: {
+export function ChoiceField<T extends string>({ label, value, options, onChange, placeholder, disabled, required, description, ariaLabel }: {
   label: string; value: T | ""; options: readonly { value: T; label: string; disabled?: boolean }[];
-  onChange: (value: T | "") => void; placeholder?: string; disabled?: boolean;
+  onChange: (value: T | "") => void;
+  /** Prompt shown while nothing is chosen. It can be picked to clear the choice unless `required` is set. */
+  placeholder?: string | undefined;
+  disabled?: boolean | undefined;
+  /** A choice must be made: the placeholder is shown only until then and can never be picked. */
+  required?: boolean | undefined;
+  /** Help text under the select, announced with it. */
+  description?: ReactNode;
+  /** Fuller accessible name, for a field repeated per row; it should contain `label`. */
+  ariaLabel?: string | undefined;
 }) {
+  const descriptionId = useId();
   const selected = options.some((option) => option.value === value) ? value : "";
-  return (
+  const clearable = Boolean(placeholder) && !required;
+  const field = (
     <Field label={label}>
-      <select className={fieldClass} value={selected} disabled={disabled} onChange={(event) => {
-        const next = options.find((option) => option.value === event.currentTarget.value);
-        if (next && !next.disabled) onChange(next.value);
-        else if (placeholder && event.currentTarget.value === "") onChange("");
-      }}>
-        {(placeholder || !selected) && <option value="" disabled={!placeholder}>{placeholder ?? "Choose an option"}</option>}
+      <select className={fieldClass} value={selected} disabled={disabled} required={required} aria-label={ariaLabel}
+        aria-describedby={description ? descriptionId : undefined} onChange={(event) => {
+          const next = options.find((option) => option.value === event.currentTarget.value);
+          if (next && !next.disabled) onChange(next.value);
+          else if (clearable && event.currentTarget.value === "") onChange("");
+        }}>
+        {(clearable || !selected) && <option value="" disabled={!clearable}>{placeholder ?? "Choose an option"}</option>}
         {options.map((option) => <option key={option.value} value={option.value} disabled={option.disabled}>{option.label}</option>)}
       </select>
     </Field>
   );
+  if (!description) return field;
+  // Outside the label, so it describes the select without becoming part of its name.
+  return <div className="space-y-1">{field}<p id={descriptionId} className="text-xs text-muted-foreground">{description}</p></div>;
 }
 
-export function AsyncForm({ label, submitLabel, children, validate, onSubmit, disabled }: {
-  label: string; submitLabel: string; children: ReactNode; validate?: () => string | undefined;
+export function AsyncForm({ label, submitLabel, submitAriaLabel, children, validate, onSubmit, disabled }: {
+  label: string; submitLabel: string;
+  /** Fuller accessible name for the submit button, such as one naming the item; it should start with `submitLabel`. */
+  submitAriaLabel?: string | undefined;
+  children: ReactNode; validate?: () => string | undefined;
   onSubmit: () => void | Promise<void>; disabled?: boolean;
 }) {
   const active = useRef(false);
@@ -102,11 +121,19 @@ export function AsyncForm({ label, submitLabel, children, validate, onSubmit, di
       setBusy(false);
     }
   }
+  // A disabled fieldset only locks native controls; this also stops widgets such as trees and lists while busy.
+  // Tab still moves focus, so keyboard users are never trapped.
+  const block = (event: SyntheticEvent) => {
+    if (!busy) return;
+    if ("key" in event && (event as SyntheticEvent & { key: string }).key === "Tab") return;
+    event.preventDefault();
+    event.stopPropagation();
+  };
   return (
-    <form aria-label={label} className="space-y-2" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
-      <fieldset disabled={busy} className="min-w-0 space-y-2">{children}</fieldset>
+    <form aria-label={label} aria-busy={busy || undefined} className="space-y-2" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
+      <fieldset disabled={busy} className="min-w-0 space-y-2" onClickCapture={block} onPointerDownCapture={block} onKeyDownCapture={block}>{children}</fieldset>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" size="sm" loading={busy} disabled={disabled}>{submitLabel}</Button>
+      <Button type="submit" size="sm" aria-label={submitAriaLabel} loading={busy} disabled={disabled} focusableWhenDisabled>{submitLabel}</Button>
     </form>
   );
 }

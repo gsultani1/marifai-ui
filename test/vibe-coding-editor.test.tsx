@@ -7,6 +7,7 @@ import {
   createBuilderDocument, VibeBuilderChangeReview, VibeBuilderComposer, VibeCodingEditor,
   type BuilderDocument, type VibeBuilderProposal, type VibeBuilderPromptRequest,
 } from "../src/index.js";
+import { isDisabled } from "./helpers.js";
 
 afterEach(cleanup);
 
@@ -63,7 +64,7 @@ it("blocks stale proposals, shows file changes, and sends the expected revision 
   };
   const { rerender } = render(<VibeBuilderChangeReview proposal={proposal} revision="2" onApply={apply} />);
   const button = screen.getByRole<HTMLButtonElement>("button", { name: "Apply changes" });
-  expect(button.disabled).toBe(true);
+  expect(isDisabled(button)).toBe(true);
   fireEvent.submit(screen.getByRole("form", { name: "Apply proposal" }));
   expect(apply).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Inspect source changes" }));

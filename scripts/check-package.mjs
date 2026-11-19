@@ -37,10 +37,11 @@ import {
 } from "@sultanico/ai-ui";
 import { Message as DirectMessage } from "@sultanico/ai-ui/components/message";
 import { useStickToBottom } from "@sultanico/ai-ui/hooks/use-stick-to-bottom";
-import { TaskQuickAdd } from "@sultanico/ai-ui/experimental";
-import { TaskQuickAdd as DirectTaskQuickAdd } from "@sultanico/ai-ui/experimental/task-quick-add";
-// @ts-expect-error experimental components are not exported from the main entry point
-import type { TaskQuickAddProps } from "@sultanico/ai-ui";
+import { TaskQuickAdd, type TaskQuickAddProps } from "@sultanico/ai-ui";
+import { TaskQuickAdd as DirectTaskQuickAdd } from "@sultanico/ai-ui/components/task-quick-add";
+import { TaskQuickAdd as AliasTaskQuickAdd } from "@sultanico/ai-ui/experimental";
+import { TaskQuickAdd as AliasDirectTaskQuickAdd } from "@sultanico/ai-ui/experimental/task-quick-add";
+const quickAddProps: TaskQuickAddProps = { onAdd: () => undefined };
 
 import {
   VibeCodingEditor, PageBuilderInspector, createBuilderDocument, createCustomBuilderBlock,
@@ -200,10 +201,12 @@ const general = (
   </>
 );
 
-const experimental = (
+const promoted = (
   <>
-    <TaskQuickAdd onAdd={noop} />
+    <TaskQuickAdd {...quickAddProps} />
     <DirectTaskQuickAdd onAdd={noop} />
+    <AliasTaskQuickAdd onAdd={noop} />
+    <AliasDirectTaskQuickAdd onAdd={noop} />
   </>
 );
 
@@ -217,7 +220,7 @@ void invalidRole;
 void unsafePreview;
 void invalidStatus;
 
-console.log(renderToStaticMarkup(view) + renderToStaticMarkup(general) + renderToStaticMarkup(experimental));
+console.log(renderToStaticMarkup(view) + renderToStaticMarkup(general) + renderToStaticMarkup(promoted));
 `;
 
 const OWNED = `import { Message, MessageBody, MessageContent } from "./owned-ui/index.js";
@@ -299,7 +302,7 @@ try {
   );
   run(process.execPath, [resolve(consumer, "node_modules/typescript/bin/tsc")], consumer);
   pass("public API, subpath exports and copied source typecheck in a strict consumer");
-  pass("negative type checks reject an unknown author, allow-same-origin, an unknown tool status and experimental imports from the main entry point");
+  pass("negative type checks reject an unknown author, allow-same-origin and an unknown tool status");
 
   const markup = run(process.execPath, [resolve(consumer, "out/consumer.js")], consumer);
   for (const needle of [">Installed</strong>", 'aria-label="Add a task"','aria-label="Send message"', 'role="separator"', "Content-Security-Policy", "Server rendered copy", "Store reset report", 'aria-label="Heading: Spring sale"', 'data-slot="button"', ">Weekly sales<", 'data-slot="qr-code"', 'data-slot="site-header"', 'data-slot="calendar-heatmap"', 'data-slot="pricing-table"', 'data-slot="time-picker"', 'data-slot="tree-view"', "application/ld+json"]) {
@@ -324,8 +327,12 @@ try {
   assert.equal(consumerRequire.resolve("@sultanico/ai-ui/styles.css"), consumerRequire.resolve("@sultanico/ai-ui/preset.css"));
   pass("the earlier styles.css export still resolves, to the preset");
 
-  assert.throws(() => consumerRequire.resolve("@sultanico/ai-ui/components/task-quick-add"), /Cannot find module/);
-  pass("experimental components resolve only from the experimental entry point");
+  assert.equal(consumerRequire.resolve("@sultanico/ai-ui/experimental/task-quick-add"), consumerRequire.resolve("@sultanico/ai-ui/components/task-quick-add"));
+  const aliasCheck = `import * as main from "@sultanico/ai-ui"; import * as alias from "@sultanico/ai-ui/experimental";
+const names = Object.keys(alias);
+if (names.length !== 129 || names.some((name) => alias[name] !== main[name])) { console.error("alias mismatch"); process.exit(1); }`;
+  run(process.execPath, ["--input-type=module", "-e", aliasCheck], consumer);
+  pass("the deprecated experimental entry point re-exports the same stable modules");
 
   const evidence = {
     artifact: pack.filename,
