@@ -784,7 +784,7 @@ useNotificationPolling((signal) => refreshNotifications(signal), { open });
 
 Interactive parts use Base UI (Accordion, AlertDialog, Avatar, Button, Checkbox, CheckboxGroup, Collapsible, Combobox, ContextMenu, Dialog, Drawer, Field, Fieldset, Input, Menu, Menubar, Meter, NavigationMenu, NumberField, OTPField, Popover, PreviewCard, Progress, RadioGroup, ScrollArea, Select, Separator, Slider, Switch, Tabs, Toggle, ToggleGroup, Toolbar, Tooltip) or native elements with explicit ARIA, every icon-only control has an accessible name, and animations respect `prefers-reduced-motion`. Motion is not a dependency: collapsibles animate with Base UI's CSS variables and nothing else needed physics.
 
-0.4.0-dev.4 briefly exported 129 of these components from `@sultanico/ai-ui/experimental`. They are now stable and exported from the main entry point; `@sultanico/ai-ui/experimental` and `@sultanico/ai-ui/experimental/<name>` still resolve to the same modules but are deprecated and will be removed in a later release.
+0.4.0-dev.5 briefly exported 129 of these components from `@sultanico/ai-ui/experimental`. They are now stable and exported from the main entry point; `@sultanico/ai-ui/experimental` and `@sultanico/ai-ui/experimental/<name>` still resolve to the same modules but are deprecated and will be removed in a later release.
 
 ## Development
 

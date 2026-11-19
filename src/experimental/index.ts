@@ -1,6 +1,6 @@
 // packages/ai-ui/src/experimental/index.ts
 /**
- * @deprecated Compatibility alias for 0.4.0-dev.4, which briefly exported these
+ * @deprecated Compatibility alias for 0.4.0-dev.5, which briefly exported these
  * components from "@sultanico/ai-ui/experimental". They are stable and exported
  * from "@sultanico/ai-ui" and "@sultanico/ai-ui/components/<name>"; import them
  * from there. This entry point will be removed in a later release.
