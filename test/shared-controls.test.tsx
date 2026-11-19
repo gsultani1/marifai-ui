@@ -2,6 +2,7 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { DiffView } from "../src/index.js";
 import { FilteredList, LabeledTree, OrderedList } from "../src/lib/collection-controls.js";
 import {
   AsyncForm,
@@ -110,6 +111,27 @@ describe("ChoiceField", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it("never offers a required field's placeholder once a choice is made, and marks the select required", () => {
+    const onChange = vi.fn();
+    const { rerender } = render(<ChoiceField label="Format" value="" options={options} placeholder="Choose a format" required onChange={onChange} />);
+    const select = screen.getByRole("combobox", { name: "Format" }) as HTMLSelectElement;
+    expect(select.required).toBe(true);
+    expect((screen.getByRole("option", { name: "Choose a format" }) as HTMLOptionElement).disabled).toBe(true);
+    rerender(<ChoiceField label="Format" value="fixed" options={options} placeholder="Choose a format" required onChange={onChange} />);
+    expect(screen.queryByRole("option", { name: "Choose a format" })).toBeNull();
+    fireEvent.change(select, { target: { value: "" } });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("describes the select without adding the description to its name, and takes a fuller name per row", () => {
+    render(<ChoiceField label="Decision" ariaLabel="Decision for Book the forklift inspection" description="Applies to this action only."
+      value="fixed" options={options} onChange={vi.fn()} />);
+    const select = screen.getByRole("combobox", { name: "Decision for Book the forklift inspection" });
+    const description = document.getElementById(select.getAttribute("aria-describedby") ?? "");
+    expect(description?.textContent).toBe("Applies to this action only.");
+    expect(select.closest("label")?.textContent).not.toContain("Applies to this action only.");
+  });
+
   it("shows a disabled prompt when the value matches no option and there is no placeholder", () => {
     render(<ChoiceField label="Branch" value="" options={options} onChange={vi.fn()} />);
     const prompt = screen.getByRole("option", { name: "Choose an option" }) as HTMLOptionElement;
@@ -142,6 +164,26 @@ describe("AsyncForm", () => {
 
     await act(async () => { fireEvent.submit(form); });
     expect(screen.getByRole("alert").textContent).toBe("The scheduler is offline.");
+  });
+
+  it("locks widgets that a disabled fieldset cannot, such as clickable rows, while it is busy", async () => {
+    let finish: () => void = () => undefined;
+    const onRow = vi.fn();
+    render(<AsyncForm label="Restore tabs" submitLabel="Restore" onSubmit={() => new Promise<void>((resolve) => { finish = resolve; })}>
+      <div role="treeitem" aria-selected={false} tabIndex={0} onClick={onRow} onKeyDown={onRow}>Window 1</div>
+    </AsyncForm>);
+    const row = screen.getByRole("treeitem", { name: "Window 1" });
+    fireEvent.click(row);
+    expect(onRow).toHaveBeenCalledTimes(1);
+    fireEvent.submit(screen.getByRole("form", { name: "Restore tabs" }));
+    expect(screen.getByRole("form", { name: "Restore tabs" }).getAttribute("aria-busy")).toBe("true");
+    fireEvent.click(row);
+    fireEvent.keyDown(row, { key: "Enter" });
+    fireEvent.keyDown(row, { key: "Tab" });
+    expect(onRow).toHaveBeenCalledTimes(2);
+    await act(async () => finish());
+    fireEvent.click(row);
+    expect(onRow).toHaveBeenCalledTimes(3);
   });
 
   it("shows a short submit label while naming the item for assistive technology", () => {
@@ -192,6 +234,32 @@ describe("FilteredList", () => {
   });
 });
 
+describe("FilteredList messages and announcements", () => {
+  const stock = [{ id: "a", name: "Claw hammer" }, { id: "b", name: "Hand saw" }, { id: "c", name: "Tape measure" }];
+  const list = (items: typeof stock) => <FilteredList items={items} searchLabel="Search stock" searchText={(item) => [item.name]}
+    empty="Nothing in stock." noMatches="No tools match." render={(item) => <span>{item.name}</span>} />;
+
+  it("tells an empty list apart from a search with no matches", () => {
+    const { unmount } = render(list([]));
+    expect(screen.getByText("Nothing in stock.")).toBeTruthy();
+    unmount();
+    render(list(stock));
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search stock" }), { target: { value: "drill" } });
+    expect(screen.getByText("No tools match.")).toBeTruthy();
+    expect(screen.queryByText("Nothing in stock.")).toBeNull();
+  });
+
+  it("announces how many items the search shows, and stays quiet without one", () => {
+    render(list(stock));
+    const status = screen.getByRole("status");
+    expect(status.textContent).toBe("");
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search stock" }), { target: { value: "ha" } });
+    expect(status.textContent).toBe("Showing 2 of 3");
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search stock" }), { target: { value: "drill" } });
+    expect(status.textContent).toBe("Showing 0 of 3");
+  });
+});
+
 describe("OrderedList", () => {
   it("shows an empty message and otherwise reports the new order as ids", () => {
     const onReorder = vi.fn();
@@ -201,6 +269,12 @@ describe("OrderedList", () => {
       itemLabel={(item) => item.name} onReorder={onReorder} />);
     expect(screen.getByText("Primary")).toBeTruthy();
     expect(screen.getByText("Backup")).toBeTruthy();
+    expect(screen.getByRole("list", { name: "Fallback order" }).tagName).toBe("OL");
+  });
+
+  it("shows its own empty message", () => {
+    render(<OrderedList items={[]} label="Fallback order" itemLabel={() => ""} onReorder={vi.fn()} empty="No fallback models." />);
+    expect(screen.getByText("No fallback models.")).toBeTruthy();
   });
 });
 
@@ -238,11 +312,35 @@ describe("LabeledTree", () => {
     expect(screen.getByText("Supplier follow-up")).toBeTruthy();
   });
 
+  it("reports the already active node again when it is clicked, but not twice for a new node", () => {
+    const onSelect = vi.fn();
+    render(<LabeledTree items={scopes} label="Variable scopes" activeId="global" onSelect={onSelect} />);
+    fireEvent.click(screen.getByText("Global"));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenLastCalledWith("global");
+    fireEvent.click(screen.getByText("Local"));
+    expect(onSelect).toHaveBeenCalledTimes(2);
+    expect(onSelect).toHaveBeenLastCalledWith("local");
+  });
+
   it("reports the already active node again when it is activated with Enter", () => {
     const onSelect = vi.fn();
     render(<LabeledTree items={scopes} label="Variable scopes" activeId="global" onSelect={onSelect} />);
     const active = screen.getByRole("treeitem", { name: /Global/ });
     fireEvent.keyDown(active, { key: "Enter" });
     expect(onSelect).toHaveBeenCalledWith("global");
+  });
+});
+
+describe("DiffView", () => {
+  it("takes its own region name and counts single lines in the singular", () => {
+    const { container } = render(<DiffView oldValue={"a\n"} newValue={"b\n"} label="Changes to quantity" oldTitle="Monday" newTitle="Tuesday" />);
+    expect(screen.getByRole("region", { name: "Changes to quantity" })).toBeTruthy();
+    expect(container.querySelector("caption")?.textContent).toBe("Changes from Monday to Tuesday: 1 line added, 1 line removed");
+  });
+
+  it("names the side-by-side columns after the two versions", () => {
+    render(<DiffView oldValue={"a\nb\n"} newValue={"a\nc\n"} mode="split" oldTitle="Monday" newTitle="Tuesday" />);
+    expect(screen.getAllByRole("columnheader").map((header) => header.textContent)).toEqual(["Line in Monday", "Monday", "Line in Tuesday", "Tuesday"]);
   });
 });

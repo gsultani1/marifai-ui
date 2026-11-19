@@ -14,7 +14,7 @@ export function ToolArgumentDiff({ changes, className }: ToolArgumentDiffProps) 
   return <ControlPanel slot="tool-argument-diff" title="Argument changes" className={className}>
     <ItemList items={changes} empty="No argument changes." render={(item) => <>
       <h4 className="text-sm font-medium break-words">{item.key} · {item.before === undefined ? "Added" : item.after === undefined ? "Removed" : "Changed"}</h4>
-      <DiffView oldValue={item.before ?? ""} newValue={item.after ?? ""} />
+      <DiffView oldValue={item.before ?? ""} newValue={item.after ?? ""} label={"Changes to " + item.key} />
     </>} />
   </ControlPanel>;
 }

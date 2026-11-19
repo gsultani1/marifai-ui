@@ -689,7 +689,8 @@ describe("TestExplorer", () => {
 
   it("summarizes test outcomes in a live status and shows each outcome in words", () => {
     const { rerender } = render(<TestExplorer tests={tests} />);
-    const status = screen.getByRole("status");
+    const status = screen.getAllByRole("status").find((element) => element.textContent?.includes("tests:"));
+    if (!status) throw new Error("no test summary status");
     expect(status.textContent).toBe("4 tests: 1 not run, 1 running, 1 passed, 1 failed");
     expect(screen.getByText("receipt · Not run")).toBeTruthy();
     rerender(<TestExplorer tests={tests.map((test) => test.id === "t3" ? { ...test, outcome: "passed" as const } : test)} />);
@@ -725,7 +726,7 @@ describe("TestExplorer", () => {
 
   it("shows an empty message and no summary without tests", () => {
     render(<TestExplorer tests={[]} />);
-    expect(screen.getByText("No matching tests.")).toBeTruthy();
-    expect(screen.getByRole("status").textContent).toBe("");
+    expect(screen.getByText("No tests.")).toBeTruthy();
+    expect(screen.getAllByRole("status").map((element) => element.textContent)).toEqual(["", ""]);
   });
 });

@@ -411,7 +411,7 @@ describe("AssistantInboxTriage", () => {
     fireEvent.change(screen.getByRole("searchbox", { name: "Search inbox" }), { target: { value: "voicemail" } });
     expect(screen.queryByText("Invoice from Orgill")).toBeNull();
     fireEvent.change(screen.getByRole("searchbox", { name: "Search inbox" }), { target: { value: "lumber" } });
-    expect(screen.getByText("No inbox items to review.")).toBeTruthy();
+    expect(screen.getByText("No matching inbox items.")).toBeTruthy();
   });
 });
 

@@ -16,7 +16,7 @@ export interface ChatDraftSwitcherProps {
 export function ChatDraftSwitcher({ drafts, onOpen, onDiscard, pendingIds = [], className }: ChatDraftSwitcherProps) {
   return <ControlPanel slot="chat-draft-switcher" title="Chat drafts" className={className}>
     <FilteredList items={drafts} searchLabel="Search drafts" searchText={(draft) => [draft.title, draft.preview]}
-      empty={drafts.length ? "No drafts match your search." : "No saved drafts."} render={(draft) => {
+      empty="No saved drafts." noMatches="No drafts match your search." render={(draft) => {
         const pending = pendingIds.includes(draft.id);
         return <>
           <ItemHeading title={draft.title} detail={draft.updatedAt}>

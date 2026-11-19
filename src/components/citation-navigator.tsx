@@ -25,7 +25,7 @@ export function CitationNavigator({ citations, activeId, onChange, onOpen, class
   }
   return <ControlPanel slot="citation-navigator" title="Citations" className={className}>
     {/* A citation cannot be cleared, so the prompt is offered only until one is chosen. */}
-    <ChoiceField label="Citation" value={selected?.id ?? ""} {...(selected ? {} : { placeholder: "Choose a citation" })}
+    <ChoiceField label="Citation" value={selected?.id ?? ""} placeholder="Choose a citation" required
       options={citations.map((item) => ({ label: item.title, value: item.id }))}
       onChange={(id) => { if (id) onChange(id); }} />
     {/* Previous and Next change the citation without moving focus, so the new position is announced. */}

@@ -16,7 +16,7 @@ export function ResponseFormatPicker({ formats, value, onChange, className }: Re
   const selected = formats.find((format) => format.id === value);
   return <ControlPanel slot="response-format-picker" title="Response format" className={className}>
     {formats.length ? <>
-      <ChoiceField label="Format" value={selected?.id ?? ""} placeholder="Choose a format"
+      <ChoiceField label="Format" value={selected?.id ?? ""} placeholder="Choose a format" required
         options={formats.map(({ id, label, unavailableReason }) => ({ value: id, label: unavailableReason ? label + " (" + unavailableReason + ")" : label, disabled: Boolean(unavailableReason) }))}
         onChange={(id) => { if (id) onChange(id); }} />
       <div aria-live="polite">{selected?.requirements && <p className="text-sm break-words">{selected.requirements}</p>}</div>

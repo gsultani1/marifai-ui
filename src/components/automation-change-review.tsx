@@ -16,7 +16,7 @@ function ChangedSetting({ label, before, after }: { label: string; before: strin
   const id = useId();
   return <div role="group" aria-labelledby={id} className="space-y-1">
     <h4 id={id} className="text-sm font-medium">{label}</h4>
-    {before === after ? <p className="text-sm text-muted-foreground">Unchanged</p> : <DiffView oldValue={before} newValue={after} />}
+    {before === after ? <p className="text-sm text-muted-foreground">Unchanged</p> : <DiffView oldValue={before} newValue={after} label={label + " changes"} />}
   </div>;
 }
 

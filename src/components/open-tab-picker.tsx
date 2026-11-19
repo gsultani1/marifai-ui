@@ -17,7 +17,7 @@ export function OpenTabPicker({ tabs, onOpen, onAttach, attachedIds = [], classN
   return <ControlPanel slot="open-tab-picker" title="Open tabs" className={className}>
     <FilteredList items={tabs} searchLabel="Search open tabs" searchText={(item) => [item.title, item.address, item.window]}
       filterLabel="Window" filters={[...new Set(tabs.map((item) => item.window))].map((value) => ({ value, label: value }))}
-      category={(item) => item.window} empty="No matching tabs." render={(item) => <ItemHeading title={item.title} detail={item.window + " · " + item.address}>
+      category={(item) => item.window} empty="No open tabs." noMatches="No matching tabs." render={(item) => <ItemHeading title={item.title} detail={item.window + " · " + item.address}>
         <ControlAction label="Open" item={item.title} onClick={onOpen && (() => onOpen(item.id))} />
         <ControlAction label={attachedIds.includes(item.id) ? "Attached" : "Attach"} item={item.title}
           disabled={attachedIds.includes(item.id)} onClick={onAttach && (() => onAttach(item.id))} />

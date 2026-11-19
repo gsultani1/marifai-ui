@@ -23,7 +23,7 @@ export function BrowserConsolePanel({ entries, onOpenSource, className }: Browse
   return <ControlPanel slot="browser-console-panel" title="Browser console" className={className}>
     <FilteredList items={entries} searchLabel="Search console" searchText={(item) => [item.text, item.source?.address]}
       filterLabel="Level" filters={levelFilters}
-      category={(item) => item.level} empty={entries.length ? "No matching console entries." : "The console is empty."} render={(item) => {
+      category={(item) => item.level} empty="The console is empty." noMatches="No matching console entries." render={(item) => {
         const source = item.source;
         return <ItemHeading title={item.text} detail={levels[item.level] + (source ? " · " + location(source) : "")}>
           <ControlAction label="Open source" item={item.text} onClick={onOpenSource && source && (() => onOpenSource(source))} />

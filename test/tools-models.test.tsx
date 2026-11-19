@@ -321,10 +321,10 @@ describe("ToolArgumentDiff", () => {
     ]} />);
     expect(screen.getAllByRole("heading", { level: 4 }).map((heading) => heading.textContent)).toEqual(["query · Changed", "limit · Added", "region · Removed"]);
     const [query, limit, region] = screen.getAllByRole("listitem");
-    expect(within(query!).getByText(/1 lines added, 1 lines removed/)).toBeTruthy();
-    expect(within(limit!).getByText(/1 lines added, 0 lines removed/)).toBeTruthy();
-    expect(within(region!).getByText(/0 lines added, 1 lines removed/)).toBeTruthy();
-    expect(within(query!).getByRole("region", { name: "Diff lines" }).textContent).toContain("cordless drill 20V");
+    expect(within(query!).getByText(/1 line added, 1 line removed/)).toBeTruthy();
+    expect(within(limit!).getByText(/1 line added, 0 lines removed/)).toBeTruthy();
+    expect(within(region!).getByText(/0 lines added, 1 line removed/)).toBeTruthy();
+    expect(within(query!).getByRole("region", { name: "Changes to query" }).textContent).toContain("cordless drill 20V");
   });
 
   it("shows an empty state without changes", () => {
@@ -569,7 +569,7 @@ describe("ToolResultCompare", () => {
   it("diffs the two results under their labels by default", () => {
     render(<ToolResultCompare left={left} right={right} />);
     expect(combobox("Result view").value).toBe("diff");
-    expect(screen.getByText("Changes from Run 1 to Run 2: 1 lines added, 1 lines removed")).toBeTruthy();
+    expect(screen.getByText("Changes from Run 1 to Run 2: 1 line added, 1 line removed")).toBeTruthy();
     expect(screen.getByRole("region", { name: "Diff lines" }).textContent).toContain("5 drills in stock");
   });
 

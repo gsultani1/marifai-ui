@@ -100,10 +100,10 @@ describe("AutomationChangeReview", () => {
     expect(within(screen.getByRole("group", { name: "Trigger" })).getByText("Unchanged")).toBeTruthy();
     const schedule = screen.getByRole("group", { name: "Schedule" });
     expect(within(schedule).getByText("Before → After")).toBeTruthy();
-    const lines = within(schedule).getByRole("region", { name: "Diff lines" });
+    const lines = within(schedule).getByRole("region", { name: "Schedule changes" });
     expect(lines.textContent).toContain("Removed: Weekdays at 6:00 AM");
     expect(lines.textContent).toContain("Added: Daily at 5:30 AM");
-    const actionLines = within(screen.getByRole("group", { name: "Actions" })).getByRole("region", { name: "Diff lines" });
+    const actionLines = within(screen.getByRole("group", { name: "Actions" })).getByRole("region", { name: "Actions changes" });
     expect(actionLines.textContent).toContain("Removed: Email the supplier");
     expect(actionLines.textContent).toContain("Added: Post to #inventory");
   });
@@ -111,7 +111,7 @@ describe("AutomationChangeReview", () => {
   it("shows every setting as unchanged when nothing differs", () => {
     render(<AutomationChangeReview before={before} after={{ ...before, actions: [...before.actions] }} />);
     expect(screen.getAllByText("Unchanged")).toHaveLength(3);
-    expect(screen.queryByRole("region", { name: "Diff lines" })).toBeNull();
+    expect(screen.queryByRole("region", { name: /^(Trigger|Schedule|Actions) changes$/ })).toBeNull();
   });
 });
 
@@ -387,7 +387,7 @@ describe("AutomationRunCancellation", () => {
     fireEvent.click(screen.getByRole("button", { name: "Review cancellation" }));
     const dialog = await screen.findByRole("alertdialog", { name: "Cancel this run?" });
     fireEvent.click(within(dialog).getByRole("button", { name: "Cancel run" }));
-    expect((await within(dialog).findByRole("alert")).textContent).toBe("That did not work. Try again.");
+    expect((await within(dialog).findByRole("alert")).textContent).toBe("Run already finished");
     expect(dialog.isConnected).toBe(true);
   });
 

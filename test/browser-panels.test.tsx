@@ -283,8 +283,8 @@ describe("BrowserPageDiff", () => {
     const { container } = render(<BrowserPageDiff before={before} after={after} />);
     const diff = container.querySelector("[data-slot='diff-view']")!;
     expect(diff.getAttribute("data-mode")).toBe("unified");
-    expect(container.querySelector("caption")?.textContent).toBe("Changes from Monday 9:00 to Tuesday 9:00: 1 lines added, 1 lines removed");
-    const lines = screen.getByRole("region", { name: "Diff lines" });
+    expect(container.querySelector("caption")?.textContent).toBe("Changes from Monday 9:00 to Tuesday 9:00: 1 line added, 1 line removed");
+    const lines = screen.getByRole("region", { name: "Changes from Monday 9:00 to Tuesday 9:00" });
     expect(lines.textContent).toContain("Removed: $34.99");
     expect(lines.textContent).toContain("Added: $29.99");
     fireEvent.change(screen.getByRole("combobox", { name: "Diff layout" }), { target: { value: "split" } });
@@ -295,7 +295,7 @@ describe("BrowserPageDiff", () => {
     render(<BrowserPageDiff before={before} after={{ label: "Tuesday 9:00", text: before.text }} />);
     expect(screen.getByText("No changes between Monday 9:00 and Tuesday 9:00.")).toBeTruthy();
     expect(screen.queryByRole("combobox", { name: "Diff layout" })).toBeNull();
-    expect(screen.queryByRole("region", { name: "Diff lines" })).toBeNull();
+    expect(screen.queryByRole("region", { name: /^Changes from/ })).toBeNull();
   });
 });
 

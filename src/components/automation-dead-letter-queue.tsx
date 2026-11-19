@@ -17,7 +17,7 @@ export function AutomationDeadLetterQueue({ deliveries, onInspect, onRetry, pend
   return <ControlPanel slot="automation-dead-letter-queue" title="Failed deliveries" className={className}>
     <FilteredList items={deliveries} searchLabel="Search deliveries" searchText={(item) => [item.title,item.reason]}
       filterLabel="Delivery type" filters={[...new Set(deliveries.map((item) => item.kind))].map((value) => ({value,label:value}))} category={(item) => item.kind}
-      empty={deliveries.length ? "No matching failures." : "No failed deliveries."} render={(item) => {
+      empty="No failed deliveries." noMatches="No matching failures." render={(item) => {
         const pending = pendingIds.includes(item.id);
         return <ItemHeading title={item.title} detail={[item.timestamp,item.reason,item.retryUnavailableReason,pending && "Retrying"].filter(Boolean).join(" · ")}>
           <ControlAction label="Inspect" item={item.title} onClick={() => onInspect(item.id)} />

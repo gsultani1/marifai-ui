@@ -23,7 +23,7 @@ export function TestExplorer({ tests, onRun, pendingIds = [], className }: TestE
     <p role="status" className="text-sm text-muted-foreground empty:hidden">{cases.length ? cases.length + (cases.length === 1 ? " test: " : " tests: ") + summary : null}</p>
     <FilteredList items={tests} searchLabel="Search tests" searchText={(item) => [item.name, item.parentName]}
       filterLabel="Outcome" filters={outcomes.map((value) => ({ value, label: outcomeLabels[value] }))} category={(item) => item.outcome}
-      empty="No matching tests." render={(item) => {
+      empty="No tests." noMatches="No matching tests." render={(item) => {
         const busy = pendingIds.includes(item.id);
         return <ItemHeading title={item.name} detail={[item.parentName, outcomeLabels[item.outcome], busy && "Starting…"].filter(Boolean).join(" · ")}>
           <ControlAction label={item.kind === "suite" ? "Run suite" : "Run test"} item={item.parentName ? item.name + " in " + item.parentName : item.name}

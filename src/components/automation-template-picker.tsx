@@ -14,7 +14,7 @@ export interface AutomationTemplatePickerProps {
 export function AutomationTemplatePicker({ templates, onSelect, className }: AutomationTemplatePickerProps) {
   return <ControlPanel slot="automation-template-picker" title="Automation templates" className={className}>
     <FilteredList items={templates} searchLabel="Search templates" searchText={(item) => [item.title,item.trigger,...item.actions]}
-      empty={templates.length ? "No matching templates." : "No templates available."} render={(item) => <>
+      empty="No templates available." noMatches="No matching templates." render={(item) => <>
         <ItemHeading title={item.title} detail={item.trigger}><ControlAction label="Use template" item={item.title} onClick={() => onSelect(item.id)} /></ItemHeading>
         <dl className="space-y-1 text-sm">
           <div><dt>Actions</dt><dd className="break-words text-muted-foreground">{item.actions.join(" → ") || "None"}</dd></div>

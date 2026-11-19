@@ -17,7 +17,7 @@ const commandText = (item: SlashCommand) => "/" + item.name.replace(/^\/+/, "");
 export function SlashCommandPicker({ commands, onSelect, className }: SlashCommandPickerProps) {
   return <ControlPanel slot="slash-command-picker" title="Slash commands" className={className}>
     <FilteredList items={commands} searchLabel="Filter commands" searchText={(item) => [commandText(item),item.description,...item.parameters ?? []]}
-      empty={commands.length ? "No matching commands." : "No commands available."} render={(item) => {
+      empty="No commands available." noMatches="No matching commands." render={(item) => {
         const command = commandText(item);
         return <ItemHeading title={command} detail={[item.description,item.parameters?.join(" ")].filter(Boolean).join(" · ")}>
           <ControlAction label="Insert" item={command} onClick={() => onSelect(item.id,command)} />

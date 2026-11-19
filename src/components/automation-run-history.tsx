@@ -15,7 +15,7 @@ export function AutomationRunHistory({ runs, onOpen, className }: AutomationRunH
   return <ControlPanel slot="automation-run-history" title="Automation run history" className={className}>
     <FilteredList items={runs} searchLabel="Search runs" searchText={(item) => [item.title, item.startedAt, item.detail]}
       filterLabel="Run status" filters={[...new Set(runs.map((item) => item.status))].map((value) => ({ value, label: value }))}
-      category={(item) => item.status} empty={runs.length ? "No matching runs." : "No runs yet."} render={(item) => <ItemHeading title={item.title}
+      category={(item) => item.status} empty="No runs yet." noMatches="No matching runs." render={(item) => <ItemHeading title={item.title}
         detail={[item.startedAt, item.status, item.detail].filter(Boolean).join(" · ")}>
         <ControlAction label="Open run" item={item.title} onClick={() => onOpen(item.id)} />
       </ItemHeading>} />

@@ -18,7 +18,7 @@ export function BrowserPageDiff({ before, after, className }: BrowserPageDiffPro
     {before.text === after.text ? <p className="text-sm text-muted-foreground">No changes between {before.label} and {after.label}.</p> : <>
       <ChoiceField label="Diff layout" value={mode} options={[{ value: "unified", label: "Unified" }, { value: "split", label: "Side by side" }]}
         onChange={(value) => { if (value) setMode(value); }} />
-      <DiffView oldTitle={before.label} oldValue={before.text} newTitle={after.label} newValue={after.text} mode={mode} />
+      <DiffView oldTitle={before.label} oldValue={before.text} newTitle={after.label} newValue={after.text} mode={mode} label={"Changes from " + before.label + " to " + after.label} />
     </>}
   </ControlPanel>;
 }
