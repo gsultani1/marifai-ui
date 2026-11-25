@@ -61,6 +61,12 @@ describe("ControlPanel, ItemList and ItemHeading", () => {
 });
 
 describe("ControlAction", () => {
+  it("passes its ref to the rendered button", () => {
+    let button: HTMLButtonElement | null = null;
+    render(<ControlAction label="Edit" item="Return policy" onClick={vi.fn()} ref={(element) => { button = element; }} />);
+    expect(button).toBe(screen.getByRole("button", { name: "Edit Return policy" }));
+  });
+
   it("renders nothing without a handler and names repeated actions after their item", () => {
     const { container } = render(<ControlAction label="Remove" item="Claw hammer" />);
     expect(container.innerHTML).toBe("");

@@ -1,7 +1,7 @@
 // packages/ai-ui/src/lib/component-controls.tsx
 "use client";
 
-import { type ReactNode, type SyntheticEvent, useId, useRef, useState } from "react";
+import { type ReactNode, type Ref, type SyntheticEvent, useId, useRef, useState } from "react";
 
 import { Button } from "../components/button.js";
 import { focusRing } from "./classes.js";
@@ -54,11 +54,13 @@ export function ItemHeading({ title, detail, children }: { title: string; detail
   );
 }
 
-export function ControlAction({ label, item, onClick, disabled }: {
+export function ControlAction({ label, item, onClick, disabled, ref }: {
   label: string; item?: string | undefined; onClick?: (() => void) | undefined; disabled?: boolean | undefined;
+  /** The rendered button, for example to return focus to it. */
+  ref?: Ref<HTMLButtonElement> | undefined;
 }) {
   if (!onClick) return null;
-  return <Button type="button" size="sm" variant="outline" aria-label={item ? label + " " + item : undefined} disabled={disabled} focusableWhenDisabled onClick={onClick}>{label}</Button>;
+  return <Button ref={ref} type="button" size="sm" variant="outline" aria-label={item ? label + " " + item : undefined} disabled={disabled} focusableWhenDisabled onClick={onClick}>{label}</Button>;
 }
 
 export function ChoiceField<T extends string>({ label, value, options, onChange, placeholder, disabled, required, description, ariaLabel }: {

@@ -1,5 +1,6 @@
 // packages/ai-ui/test/automation.test.tsx
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -381,6 +382,33 @@ describe("AutomationRetryPolicyEditor", () => {
 });
 
 describe("AutomationRunCancellation", () => {
+  function FinishingRun({ onConfirm }: { onConfirm?: () => void }) {
+    const [reason, setReason] = useState<string>();
+    return <AutomationRunCancellation runId="run-42" name="Weekly inventory audit" affected={[]} unavailableReason={reason}
+      onConfirm={async () => { onConfirm?.(); setReason("This run already finished."); }} />;
+  }
+
+  it("moves focus to the unavailable message when it replaces the open dialog", async () => {
+    render(<FinishingRun />);
+    const trigger = screen.getByRole("button", { name: "Review cancellation" });
+    trigger.focus();
+    fireEvent.click(trigger);
+    const dialog = await screen.findByRole("alertdialog", { name: "Cancel this run?" });
+    // The dialog starts on its cancel button, so an accidental Enter never confirms.
+    await vi.waitFor(() => expect(document.activeElement).toBe(within(dialog).getByRole("button", { name: "Keep running" })));
+    await act(async () => { fireEvent.click(within(dialog).getByRole("button", { name: "Cancel run" })); });
+    await vi.waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    expect(document.activeElement?.textContent).toBe("This run already finished.");
+  });
+
+  it("leaves focus alone when the run becomes unavailable while nobody is using it", () => {
+    const { rerender } = render(<><button type="button">Elsewhere</button><AutomationRunCancellation runId="run-42" name="Weekly inventory audit" affected={[]} onConfirm={vi.fn()} /></>);
+    const elsewhere = screen.getByRole("button", { name: "Elsewhere" });
+    elsewhere.focus();
+    rerender(<><button type="button">Elsewhere</button><AutomationRunCancellation runId="run-42" name="Weekly inventory audit" affected={[]} onConfirm={vi.fn()} unavailableReason="This run already finished." /></>);
+    expect(document.activeElement).toBe(elsewhere);
+  });
+
   it("confirms cancellation with the affected work listed and passes the run id", async () => {
     const onConfirm = vi.fn();
     render(<AutomationRunCancellation runId="run-42" name="Weekly inventory audit" affected={["3 purchase orders in draft", "Supplier email queue"]} onConfirm={onConfirm} />);

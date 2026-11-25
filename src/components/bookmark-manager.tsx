@@ -41,24 +41,24 @@ function BookmarkEdit({ bookmark, folders, save, close }: {
 export function BookmarkManager({ bookmarks, folders, onOpen, onSave, onRemove, className }: BookmarkManagerProps) {
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
-  const list = useRef<HTMLDivElement>(null);
+  const editButtons = useRef(new Map<string, HTMLButtonElement>());
   const returnFocus = useRef<string | null>(null);
   // Closing the editor removes the focused control, so focus goes back to the bookmark's Edit button.
   useEffect(() => {
     if (editing !== null || returnFocus.current === null) return;
-    const bookmark = bookmarks.find((item) => item.id === returnFocus.current);
+    const id = returnFocus.current;
     returnFocus.current = null;
-    if (!bookmark) return;
-    Array.from(list.current?.querySelectorAll("button") ?? []).find((button) => button.getAttribute("aria-label") === "Edit " + bookmark.title)?.focus();
-  }, [editing, bookmarks]);
+    editButtons.current.get(id)?.focus();
+  }, [editing]);
   return <ControlPanel slot="bookmark-manager" title="Bookmarks" className={className}>
     <SearchField label="Search bookmarks" value={query} onChange={setQuery} />
-    <div ref={list}>
+    <div>
       <ItemList items={bookmarks.filter((item) => matchesQuery(query, item.title, item.address, folders.find((folder) => folder.id === item.folderId)?.label))}
         empty={bookmarks.length ? "No matching bookmarks." : "No bookmarks yet."} render={(item) => <>
           <ItemHeading title={item.title} detail={item.address}>
             <ControlAction label="Open" item={item.title} onClick={onOpen && (() => onOpen(item.id))} />
-            <ControlAction label="Edit" item={item.title} onClick={onSave && (() => setEditing(item.id))} disabled={editing === item.id} />
+            <ControlAction label="Edit" item={item.title} onClick={onSave && (() => setEditing(item.id))} disabled={editing === item.id}
+              ref={(button) => { if (button) editButtons.current.set(item.id, button); else editButtons.current.delete(item.id); }} />
             <ControlAction label="Remove" item={item.title} onClick={onRemove && (() => onRemove(item.id))} />
           </ItemHeading>
           {editing === item.id && onSave && <BookmarkEdit bookmark={item} folders={folders} save={onSave}
