@@ -79,6 +79,25 @@ export function parseIsoDate(value: string): Date | null {
   return date.getMonth() === Number(match[2]) - 1 ? date : null;
 }
 
+/**
+ * Orders a local date and time such as "2026-03-08T02:30" or "2026-03-08T02:30:15" as wall-clock time,
+ * without any time zone, or returns NaN when it is not a valid date and time. Use it to compare values from
+ * `datetime-local` inputs: `Date.parse` reads them in the browser's time zone, which shifts times inside a
+ * daylight-saving gap even when they belong to another zone.
+ */
+export function wallClockTime(value: string): number {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?$/.exec(value.trim());
+  if (!match) return Number.NaN;
+  const [year, month, day, hour, minute] = match.slice(1, 6).map(Number) as [number, number, number, number, number];
+  const second = Number(match[6] ?? 0);
+  const millisecond = Number((match[7] ?? "0").padEnd(3, "0"));
+  // UTC has no daylight-saving gaps, so it orders wall-clock times exactly; reject dates that roll over.
+  const time = Date.UTC(year, month - 1, day, hour, minute, second, millisecond);
+  const date = new Date(time);
+  const valid = date.getUTCMonth() === month - 1 && date.getUTCDate() === day && date.getUTCHours() === hour && date.getUTCMinutes() === minute;
+  return valid ? time : Number.NaN;
+}
+
 export function clampDate(value: Date, min?: Date, max?: Date): Date {
   if (min && value < startOfDay(min)) return startOfDay(min);
   if (max && value > startOfDay(max)) return startOfDay(max);

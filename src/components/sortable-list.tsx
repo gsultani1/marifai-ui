@@ -2,7 +2,7 @@
 "use client";
 
 import { GripVerticalIcon } from "lucide-react";
-import { type ComponentProps, type FocusEvent, type KeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { type ComponentProps, type FocusEvent, type KeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode, useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { useControllableState } from "../hooks/use-controllable-state.js";
 import { focusRing } from "../lib/classes.js";
@@ -40,6 +40,8 @@ export interface SortableListProps<T> extends Omit<ComponentProps<"div">, "child
   /** Accessible name of the list. */
   label: string;
   disabled?: boolean;
+  /** Renders an ordered list, for lists whose order carries meaning such as priority. */
+  ordered?: boolean;
 }
 
 interface Drag<T> {
@@ -57,12 +59,14 @@ interface Drag<T> {
  * cancels and restores the original order. Every step is announced in an
  * assertive live region, such as "Moved Claw hammer to position 3 of 6".
  */
-export function SortableList<T>({ items, defaultItems = [], onReorder, getKey, getLabel, renderItem, label, disabled = false, className, ...props }: SortableListProps<T>) {
+export function SortableList<T>({ items, defaultItems = [], onReorder, getKey, getLabel, renderItem, label, disabled = false, ordered = false, className, ...props }: SortableListProps<T>) {
   const id = useId();
   const [order, setOrder] = useControllableState<readonly T[]>({ value: items, defaultValue: defaultItems, onChange: onReorder ? (next) => onReorder([...next]) : undefined });
   const [drag, setDrag] = useState<Drag<T> | null>(null);
   const [announcement, setAnnouncement] = useState("");
-  const list = useRef<HTMLUListElement>(null);
+  const list = useRef<HTMLElement | null>(null);
+  const setList = useCallback((element: HTMLElement | null) => { list.current = element; }, []);
+  const List = ordered ? "ol" : "ul";
   const handles = useRef(new Map<string, HTMLButtonElement>());
   const shown = drag ? drag.preview : order;
   const count = shown.length;
@@ -188,7 +192,7 @@ export function SortableList<T>({ items, defaultItems = [], onReorder, getKey, g
       <p id={instructions} className="sr-only">
         Press Space or Enter to pick up an item, use the up and down arrow keys to move it, then press Space or Enter to drop it or Escape to cancel.
       </p>
-      <ul ref={list} aria-label={label} className="flex flex-col gap-1.5">
+      <List ref={setList} aria-label={label} className="flex flex-col gap-1.5">
         {shown.map((item, index) => {
           const key = getKey(item);
           const dragging = drag?.key === key;
@@ -230,7 +234,7 @@ export function SortableList<T>({ items, defaultItems = [], onReorder, getKey, g
             </li>
           );
         })}
-      </ul>
+      </List>
       <div aria-live="assertive" aria-atomic="true" className="sr-only">
         {announcement}
       </div>

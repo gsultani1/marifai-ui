@@ -26,9 +26,10 @@ export interface ConfirmDialogProps {
   tone?: "default" | "destructive";
   /**
    * Runs on confirm. The dialog stays open with a pending state while a
-   * returned promise is unsettled, and shows `errorMessage` if it rejects.
+   * returned promise is unsettled, and shows an error if it throws or rejects.
    */
   onConfirm: () => void | Promise<void>;
+  /** Shown when `onConfirm` fails. Defaults to the error's own message, or a generic one when it has none. */
   errorMessage?: ReactNode;
   className?: string;
 }
@@ -49,23 +50,28 @@ export function ConfirmDialog({
   cancelLabel = "Cancel",
   tone = "default",
   onConfirm,
-  errorMessage = "That did not work. Try again.",
+  errorMessage,
   className,
 }: ConfirmDialogProps) {
   const [open, setOpen] = useControllableState({ value: openProp, defaultValue: defaultOpen, onChange: onOpenChange });
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [reason, setReason] = useState("");
   const cancelRef = useRef<HTMLButtonElement>(null);
   const container = usePortalContainer();
 
   const confirm = () => {
     if (pending) return;
     setFailed(false);
+    const fail = (error: unknown) => {
+      setReason(error instanceof Error ? error.message : "");
+      setFailed(true);
+    };
     let result: void | Promise<void>;
     try {
       result = onConfirm();
-    } catch {
-      setFailed(true);
+    } catch (error) {
+      fail(error);
       return;
     }
     if (!(result instanceof Promise)) {
@@ -78,9 +84,9 @@ export function ConfirmDialog({
         setPending(false);
         setOpen(false);
       },
-      () => {
+      (error: unknown) => {
         setPending(false);
-        setFailed(true);
+        fail(error);
       },
     );
   };
@@ -111,7 +117,7 @@ export function ConfirmDialog({
           {children}
           {failed && (
             <p role="alert" className="text-sm text-destructive">
-              {errorMessage}
+              {errorMessage ?? (reason || "That did not work. Try again.")}
             </p>
           )}
           <div className="flex flex-wrap justify-end gap-2">

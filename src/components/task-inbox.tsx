@@ -21,7 +21,7 @@ export function TaskInbox({ tasks, onOpen, className }: TaskInboxProps) {
       options={priorities.map((value) => ({ value, label: value }))} onChange={setPriority} />
     <FilteredList items={visible} searchLabel="Search tasks" searchText={(task) => [task.title, task.detail]}
       filterLabel="Status" filters={[...new Set(tasks.map((task) => task.status))].map((value) => ({ value, label: value }))}
-      category={(task) => task.status} empty="No matching tasks." render={(task) => <ItemHeading title={task.title}
+      category={(task) => task.status} empty="No tasks." noMatches="No matching tasks." render={(task) => <ItemHeading title={task.title}
         detail={[task.status, task.priority, task.detail].filter(Boolean).join(" · ")}>
         <ControlAction label="Open task" item={task.title} onClick={() => onOpen(task.id)} />
       </ItemHeading>} />

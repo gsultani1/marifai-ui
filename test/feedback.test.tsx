@@ -61,8 +61,18 @@ describe("ConfirmDialog", () => {
   it("stays open with an error when an async confirm rejects", async () => {
     render(<ConfirmDialog defaultOpen title="Roll back?" onConfirm={() => Promise.reject(new Error("conflict"))} />);
     fireEvent.click(await screen.findByRole("button", { name: "Confirm" }));
-    expect((await screen.findByRole("alert")).textContent).toBe("That did not work. Try again.");
+    expect((await screen.findByRole("alert")).textContent).toBe("conflict");
     expect(screen.getByRole("alertdialog")).toBeTruthy();
+  });
+
+  it("prefers an explicit errorMessage and falls back to a generic message for errors without one", async () => {
+    const { unmount } = render(<ConfirmDialog defaultOpen title="Roll back?" errorMessage="The rollback could not start." onConfirm={() => Promise.reject(new Error("conflict"))} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Confirm" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("The rollback could not start.");
+    unmount();
+    render(<ConfirmDialog defaultOpen title="Roll back?" onConfirm={() => { throw "offline"; }} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Confirm" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("That did not work. Try again.");
   });
 });
 

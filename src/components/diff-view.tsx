@@ -210,6 +210,8 @@ export interface DiffViewProps extends ComponentProps<"div"> {
   newTitle?: ReactNode;
   /** Combined input length above which the diff is not computed. */
   maxLength?: number;
+  /** Accessible name of the scrolling diff region. Give each diff on a page its own, such as "Schedule changes". */
+  label?: string;
 }
 
 export function DiffView({
@@ -221,6 +223,7 @@ export function DiffView({
   oldTitle = "Before",
   newTitle = "After",
   maxLength = 200_000,
+  label = "Diff lines",
   className,
   ...props
 }: DiffViewProps) {
@@ -290,14 +293,26 @@ export function DiffView({
         <div
           ref={scrollRef}
           tabIndex={0}
-          aria-label="Diff lines"
+          aria-label={label}
           role="region"
           className="overflow-x-auto outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         >
           <table className="w-full border-collapse font-mono text-[0.8125rem] leading-6">
             <caption className="sr-only">
-              Changes from {oldTitle} to {newTitle}: {stats.added} lines added, {stats.removed} lines removed
+              Changes from {oldTitle} to {newTitle}: {stats.added} {stats.added === 1 ? "line" : "lines"} added,{" "}
+              {stats.removed} {stats.removed === 1 ? "line" : "lines"} removed
             </caption>
+            {mode === "split" && (
+              // The visible column titles sit above the table, so name the columns for screen readers too.
+              <thead className="sr-only">
+                <tr>
+                  <th scope="col">Line in {oldTitle}</th>
+                  <th scope="col">{oldTitle}</th>
+                  <th scope="col">Line in {newTitle}</th>
+                  <th scope="col">{newTitle}</th>
+                </tr>
+              </thead>
+            )}
             <tbody>
               {rows.map((row, index) => {
                 if (row.type === "gap") {
